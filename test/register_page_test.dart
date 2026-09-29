@@ -24,6 +24,7 @@ void main() {
       ),
     );
     expect(mobileDecoration.decoration.prefixText, '+63');
+    expect(mobileDecoration.decoration.prefixIcon, isNull);
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();

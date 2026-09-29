@@ -155,7 +155,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     _field(
                       _mobileController,
                       'Mobile number',
-                      Icons.phone,
+                      null,
                       keyboardType: TextInputType.phone,
                       prefixText: '+63',
                       validator: _validateMobileNumber,
@@ -259,7 +259,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _field(
     TextEditingController controller,
     String label,
-    IconData icon, {
+    IconData? icon, {
     TextInputType? keyboardType,
     String? prefixText,
     String? Function(String?)? validator,
@@ -277,7 +277,7 @@ class _RegisterPageState extends State<RegisterPage> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        prefixIcon: icon == null ? null : Icon(icon),
         prefixText: prefixText,
         border: const OutlineInputBorder(),
       ),
