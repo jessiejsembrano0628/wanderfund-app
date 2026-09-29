@@ -18,11 +18,18 @@ class _MainMenuPageState extends State<MainMenuPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<AuthProvider>().userDetails?.userId;
+      final userId = _userId(context.read<AuthProvider>());
       if (userId != null && userId.isNotEmpty) {
         context.read<TravelFundProvider>().loadFunds(userId: userId);
       }
     });
+  }
+
+  String? _userId(AuthProvider authProvider) {
+    final detailsUserId = authProvider.userDetails?.userId;
+    if (detailsUserId != null && detailsUserId.isNotEmpty) return detailsUserId;
+    final restoredUserId = authProvider.user?.id;
+    return restoredUserId?.isNotEmpty == true ? restoredUserId : null;
   }
 
   void _handleLogout() {
@@ -51,10 +58,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   Future<void> _logoutAndRedirect() async {
     await context.read<AuthProvider>().logout();
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      '/login',
-      (route) => false,
-    );
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
   void _redirectToLoginIfNeeded(TravelFundProvider provider) {
@@ -67,18 +71,22 @@ class _MainMenuPageState extends State<MainMenuPage> {
   }
 
   Future<void> _openCreatePage() async {
-    final created = await Navigator.of(context).pushNamed('/create-travel-fund');
+    final created = await Navigator.of(
+      context,
+    ).pushNamed('/create-travel-fund');
     if (created == true && mounted) {
       await _refreshFunds();
       final message = context.read<TravelFundProvider>().actionMessage;
       if (message != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
 
   Future<void> _refreshFunds() async {
-    final userId = context.read<AuthProvider>().userDetails?.userId;
+    final userId = _userId(context.read<AuthProvider>());
     if (userId != null && userId.isNotEmpty) {
       await context.read<TravelFundProvider>().loadFunds(userId: userId);
     }
@@ -96,16 +104,18 @@ class _MainMenuPageState extends State<MainMenuPage> {
     if (responseMessage != null && mounted) {
       await _refreshFunds();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(responseMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(responseMessage)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final userName = authProvider.userDetails?.firstName.trim();
+    final firstName = authProvider.userDetails?.firstName.trim();
+    final restoredName = authProvider.user?.name.trim();
+    final userName = firstName?.isNotEmpty == true ? firstName : restoredName;
 
     return Scaffold(
       appBar: AppBar(
@@ -134,90 +144,112 @@ class _MainMenuPageState extends State<MainMenuPage> {
       body: Consumer<TravelFundProvider>(
         builder: (context, provider, _) {
           _redirectToLoginIfNeeded(provider);
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (provider.errorMessage != null) {
-            return _MessageState(
-              message: provider.errorMessage!,
-              actionLabel: 'Retry',
-              onAction: _refreshFunds,
-              extraActions: [
-                FilledButton.icon(
-                  onPressed: _openCreatePage,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create fund'),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _showJoinDialog,
-                  icon: const Icon(Icons.group_add),
-                  label: const Text('Join fund'),
-                ),
-              ],
-            );
-          }
-          if (provider.funds.isEmpty) {
-            return _EmptyFundsView(
-              onCreate: _openCreatePage,
-              onJoin: _showJoinDialog,
-            );
-          }
-
           return RefreshIndicator(
-            onRefresh: () {
-              final userId = context.read<AuthProvider>().userDetails?.userId;
-              return userId == null || userId.isEmpty
-                  ? Future.value()
-                  : provider.loadFunds(userId: userId);
-            },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-              children: [
-                Text(
-                  'Welcome, ${userName?.isNotEmpty == true ? userName : 'there'}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Choose a travel fund to view its ledger.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
+            onRefresh: _refreshFunds,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (provider.isLoading) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                    ],
+                  );
+                }
+                if (provider.errorMessage != null) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: _MessageState(
+                          message: provider.errorMessage!,
+                          actionLabel: 'Retry',
+                          onAction: _refreshFunds,
+                          extraActions: [
+                            FilledButton.icon(
+                              onPressed: _openCreatePage,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Create fund'),
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: _showJoinDialog,
+                              icon: const Icon(Icons.group_add),
+                              label: const Text('Join fund'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                if (provider.funds.isEmpty) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: constraints.maxHeight,
+                        child: _EmptyFundsView(
+                          onCreate: _openCreatePage,
+                          onJoin: _showJoinDialog,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
                   children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _openCreatePage,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Create fund'),
+                    Text(
+                      'Welcome, ${userName?.isNotEmpty == true ? userName : 'there'}',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Choose a travel fund to view its ledger.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey.shade700,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _showJoinDialog,
-                        icon: const Icon(Icons.group_add),
-                        label: const Text('Join fund'),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _openCreatePage,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create fund'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _showJoinDialog,
+                            icon: const Icon(Icons.group_add),
+                            label: const Text('Join fund'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    ...provider.funds.map(
+                      (fund) => _TravelFundCard(
+                        fund: fund,
+                        onTap: () => Navigator.of(
+                          context,
+                        ).pushNamed('/ledger', arguments: fund.publicId),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 20),
-                ...provider.funds.map(
-                  (fund) => _TravelFundCard(
-                    fund: fund,
-                    onTap: () => Navigator.of(context).pushNamed(
-                      '/ledger',
-                      arguments: fund.publicId,
-                    ),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           );
         },
@@ -325,7 +357,9 @@ class _TravelFundCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      fund.travelFundName.isEmpty ? "Travel Fund" : fund.travelFundName,
+                      fund.travelFundName.isEmpty
+                          ? "Travel Fund"
+                          : fund.travelFundName,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

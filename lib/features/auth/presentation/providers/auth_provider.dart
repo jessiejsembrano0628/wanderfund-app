@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/error/failure.dart';
 import '../../domain/usecases/auth_usecase.dart';
 import '../../../../shared/entities/user_details_entity.dart';
 import '../../../../shared/entities/user_entity.dart';
@@ -14,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool _canRetryInitialization = false;
   String? _errorMessage;
 
   UserEntity? get user => _user;
@@ -22,6 +24,7 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _isAuthenticated;
   bool get isInitialized => _isInitialized;
+  bool get canRetryInitialization => _canRetryInitialization;
 
   AuthProvider({
     required this.loginUsecase,
@@ -31,24 +34,28 @@ class AuthProvider extends ChangeNotifier {
   });
 
   Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (_isInitialized && !_canRetryInitialization) return;
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     final result = await getCurrentUserUsecase();
     result.fold(
-      (_) {
+      (failure) {
         _user = null;
         _isAuthenticated = false;
+        _errorMessage = failure.message;
+        _canRetryInitialization = failure is! AuthenticationFailure;
       },
       (user) {
         _user = user;
         _isAuthenticated = true;
+        _errorMessage = null;
+        _canRetryInitialization = false;
       },
     );
     _isLoading = false;
     _isInitialized = true;
-    _errorMessage = null;
     notifyListeners();
   }
 
@@ -127,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     _isLoading = true;
     _isAuthenticated = false;
+    _canRetryInitialization = false;
     _user = null;
     _userDetails = null;
     notifyListeners();

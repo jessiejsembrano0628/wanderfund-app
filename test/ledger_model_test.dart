@@ -60,7 +60,7 @@ void main() {
       expect(capturedRequest!.method, 'PUT');
       expect(
         capturedRequest!.url.toString(),
-        'https://curfew-ivory-launder.ngrok-free.dev/api/v1/wanderfund/group-join-request/fund-123/$expectedAction',
+        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/group-join-request/fund-123/$expectedAction',
       );
       expect(jsonDecode(capturedRequest!.body), {
         'user_id': '01a0ba08-4fe3-7df8-8c47-97f2723d7a71',
@@ -114,7 +114,7 @@ void main() {
       expect(capturedRequest!.method, 'POST');
       expect(
         capturedRequest!.url.toString(),
-        'https://curfew-ivory-launder.ngrok-free.dev/api/v1/wanderfund/transactions/create',
+        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/transactions/create',
       );
       expect(jsonDecode(capturedRequest!.body), {
         'travel_fund_id': 'fund-123',
@@ -164,7 +164,7 @@ void main() {
         expect(capturedRequest!.method, 'GET');
         expect(
           capturedRequest!.url.toString(),
-          'https://curfew-ivory-launder.ngrok-free.dev/api/v1/wanderfund/transactions/fund-123/approval-requests',
+          'https://wanderfund-backend.onrender.com/api/v1/wanderfund/transactions/fund-123/approval-requests',
         );
         expect(requests.single.id, 'transaction-123');
         expect(requests.single.travelFundId, 'fund-123');
