@@ -1,0 +1,1 @@
+bool copyTextToClipboard(String text) => false;
