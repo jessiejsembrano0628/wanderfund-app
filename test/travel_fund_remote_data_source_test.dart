@@ -39,7 +39,7 @@ void main() {
       expect(capturedRequest!.method, 'GET');
       expect(
         capturedRequest!.url.toString(),
-        'https://curfew-ivory-launder.ngrok-free.dev/api/v1/wanderfund/invite/fund-123',
+        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/invite/fund-123',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer token');
       expect(capturedRequest!.headers['ngrok-skip-browser-warning'], 'true');
