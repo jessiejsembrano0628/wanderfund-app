@@ -22,8 +22,12 @@ class _RegisterPageState extends State<RegisterPage> {
   int _step = 0;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _mobileHasInteracted = false;
-  bool _emailHasInteracted = false;
+
+  String _normalizeMobileNumber(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    final localNumber = digits.startsWith('63') ? digits.substring(2) : digits;
+    return '+63$localNumber';
+  }
 
   @override
   void dispose() {
@@ -42,9 +46,13 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   String? _validateMobileNumber(String? value) {
-    final mobileNumber = value?.trim() ?? '';
-    if (mobileNumber.isEmpty) return 'Mobile number is required';
-    if (mobileNumber.length != 10 || !mobileNumber.startsWith('9')) {
+    final mobileNumber = (value ?? '').replaceAll(RegExp(r'\D'), '');
+    final localNumber = mobileNumber.startsWith('63')
+        ? mobileNumber.substring(2)
+        : mobileNumber;
+
+    if (localNumber.isEmpty) return 'Mobile number is required';
+    if (localNumber.length != 10 || !localNumber.startsWith('9')) {
       return 'Enter a valid Philippine mobile number';
     }
     return null;
@@ -102,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
       password: _passwordController.text,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
-      mobileNumber: '+63${_mobileController.text.trim()}',
+      mobileNumber: _normalizeMobileNumber(_mobileController.text),
     );
 
     if (success && mounted) {
@@ -159,14 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       keyboardType: TextInputType.phone,
                       prefixText: '+63',
                       validator: _validateMobileNumber,
-                      autovalidateMode: _mobileHasInteracted
-                          ? AutovalidateMode.always
-                          : AutovalidateMode.disabled,
-                      onChanged: (_) {
-                        if (!_mobileHasInteracted) {
-                          setState(() => _mobileHasInteracted = true);
-                        }
-                      },
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                         LengthLimitingTextInputFormatter(10),
@@ -179,14 +180,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       Icons.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: _validateEmail,
-                      autovalidateMode: _emailHasInteracted
-                          ? AutovalidateMode.always
-                          : AutovalidateMode.disabled,
-                      onChanged: (_) {
-                        if (!_emailHasInteracted) {
-                          setState(() => _emailHasInteracted = true);
-                        }
-                      },
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                     const SizedBox(height: 16),
                     _passwordField(
