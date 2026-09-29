@@ -74,6 +74,45 @@ void main() {
       '9123456789',
     );
   });
+
+  testWidgets('shows and clears mobile errors while editing', (tester) async {
+    await _pumpRegisterPage(tester);
+    final mobileField = find.byType(TextFormField).at(2);
+    const errorText = 'Enter a valid Philippine mobile number';
+
+    expect(find.text(errorText), findsNothing);
+
+    await tester.enterText(mobileField, '9123');
+    await tester.pump();
+
+    expect(find.text(errorText), findsOneWidget);
+
+    await tester.enterText(mobileField, '9123456789');
+    await tester.pump();
+
+    expect(find.text(errorText), findsNothing);
+  });
+
+  testWidgets('shows and clears email errors while editing', (tester) async {
+    await _pumpRegisterPage(tester);
+    await _completePersonalDetails(tester, '9123456789');
+    final emailField = find.byType(TextFormField).at(0);
+
+    expect(find.text('Enter a valid email'), findsNothing);
+
+    await tester.enterText(emailField, 'person+trip@example.com');
+    await tester.pump();
+
+    expect(find.text('Enter a valid email'), findsOneWidget);
+
+    await tester.enterText(emailField, 'person@example.com');
+    await tester.pumpAndSettle();
+
+    final emailWidget = tester.widget<TextFormField>(emailField);
+    expect(emailWidget.controller!.text, 'person@example.com');
+    expect(emailWidget.validator!(emailWidget.controller!.text), isNull);
+    expect(find.text('Enter a valid email'), findsNothing);
+  });
 }
 
 Future<_FakeAuthRepository> _pumpRegisterPage(WidgetTester tester) async {
@@ -113,10 +152,7 @@ Future<void> _enterPersonalDetails(
   await tester.enterText(find.byType(TextFormField).at(2), mobileNumber);
 }
 
-Future<void> _completeLoginDetails(
-  WidgetTester tester,
-  String email,
-) async {
+Future<void> _completeLoginDetails(WidgetTester tester, String email) async {
   await _enterLoginDetails(tester, email);
   await tester.tap(find.text('Register'));
   await tester.pumpAndSettle();
