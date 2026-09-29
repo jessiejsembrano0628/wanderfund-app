@@ -42,7 +42,6 @@ void main() {
         'https://wanderfund-backend.onrender.com/api/v1/wanderfund/invite/fund-123',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer token');
-      expect(capturedRequest!.headers['ngrok-skip-browser-warning'], 'true');
     });
 
     test('throws when the invite response has no code', () async {

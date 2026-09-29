@@ -101,6 +101,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final userModel = await remoteDataSource.getCurrentUser(token);
       return Right(userModel.toEntity());
     } on AuthenticationException catch (e) {
+      await tokenStorage.deleteToken();
       return Left(AuthenticationFailure(message: e.message));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
