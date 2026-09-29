@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -21,6 +23,12 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  String _normalizeMobileNumber(String value) {
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    final localNumber = digits.startsWith('63') ? digits.substring(2) : digits;
+    return '+63$localNumber';
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -37,17 +45,39 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
+  String? _validateMobileNumber(String? value) {
+    final mobileNumber = (value ?? '').replaceAll(RegExp(r'\D'), '');
+    final localNumber = mobileNumber.startsWith('63')
+        ? mobileNumber.substring(2)
+        : mobileNumber;
+
+    if (localNumber.isEmpty) return 'Mobile number is required';
+    if (localNumber.length != 10 || !localNumber.startsWith('9')) {
+      return 'Enter a valid Philippine mobile number';
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final email = value?.trim() ?? '';
+    final atIndex = email.indexOf('@');
+    if (!EmailValidator.validate(email) ||
+        atIndex <= 0 ||
+        email.substring(0, atIndex).contains('+')) {
+      return 'Enter a valid email';
+    }
+    return null;
+  }
+
   String? _validateStep() {
     if (_step == 0) {
       final firstNameError = _required(_firstNameController.text, 'First name');
       if (firstNameError != null) return firstNameError;
       final lastNameError = _required(_lastNameController.text, 'Last name');
       if (lastNameError != null) return lastNameError;
-      return _required(_mobileController.text, 'Mobile number');
+      return null;
     }
 
-    final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) return 'Enter a valid email';
     if (_passwordController.text.length < 8) {
       return 'Password must be at least 8 characters';
     }
@@ -57,40 +87,46 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  void _nextStep() {
+  bool _validateCurrentStep() {
+    final fieldsValid = _formKey.currentState?.validate() ?? false;
     final error = _validateStep();
     if (error != null) {
       _showError(error);
-      return;
+      return false;
     }
+    return fieldsValid;
+  }
+
+  void _nextStep() {
+    if (!_validateCurrentStep()) return;
     setState(() => _step = 1);
   }
 
   Future<void> _submit() async {
-    final error = _validateStep();
-    if (error != null) {
-      _showError(error);
-      return;
-    }
+    if (!_validateCurrentStep()) return;
 
     final success = await context.read<AuthProvider>().register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
-      mobileNumber: _mobileController.text.trim(),
+      mobileNumber: _normalizeMobileNumber(_mobileController.text),
     );
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registration successful. Please log in.')),
+        const SnackBar(
+          content: Text('Registration successful. Please log in.'),
+        ),
       );
       Navigator.of(context).pop();
     }
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -118,13 +154,24 @@ class _RegisterPageState extends State<RegisterPage> {
                   if (_step == 0) ...[
                     _field(_firstNameController, 'First name', Icons.person),
                     const SizedBox(height: 16),
-                    _field(_lastNameController, 'Last name', Icons.person_outline),
+                    _field(
+                      _lastNameController,
+                      'Last name',
+                      Icons.person_outline,
+                    ),
                     const SizedBox(height: 16),
                     _field(
                       _mobileController,
                       'Mobile number',
-                      Icons.phone,
+                      null,
                       keyboardType: TextInputType.phone,
+                      prefixText: '+63',
+                      validator: _validateMobileNumber,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                     ),
                   ] else ...[
                     _field(
@@ -132,13 +179,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       'Email',
                       Icons.email,
                       keyboardType: TextInputType.emailAddress,
+                      validator: _validateEmail,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                     const SizedBox(height: 16),
                     _passwordField(
                       controller: _passwordController,
                       label: 'Password',
                       obscure: _obscurePassword,
-                      onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onToggle: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     const SizedBox(height: 16),
                     _passwordField(
@@ -146,7 +196,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       label: 'Confirm password',
                       obscure: _obscureConfirmPassword,
                       onToggle: () => setState(
-                        () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
                       ),
                     ),
                   ],
@@ -154,7 +205,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 20),
                     Text(
                       authProvider.errorMessage!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 28),
@@ -179,7 +232,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               ? const SizedBox(
                                   height: 20,
                                   width: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : Text(_step == 0 ? 'Next' : 'Register'),
                         ),
@@ -198,15 +253,26 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _field(
     TextEditingController controller,
     String label,
-    IconData icon, {
+    IconData? icon, {
     TextInputType? keyboardType,
+    String? prefixText,
+    String? Function(String?)? validator,
+    AutovalidateMode autovalidateMode = AutovalidateMode.disabled,
+    ValueChanged<String>? onChanged,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
+      key: ValueKey(label),
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
+      validator: validator,
+      autovalidateMode: autovalidateMode,
+      onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
+        prefixIcon: icon == null ? null : Icon(icon),
+        prefixText: prefixText,
         border: const OutlineInputBorder(),
       ),
     );

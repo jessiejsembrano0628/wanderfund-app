@@ -1,7 +1,9 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'https://curfew-ivory-launder.ngrok-free.dev/api';
-  static const String travelFundCommandBaseUrl = 'https://curfew-ivory-launder.ngrok-free.dev/api';
+  static const String baseUrl =
+      'https://wanderfund-backend.onrender.com/api';
+  static const String travelFundCommandBaseUrl =
+      'https://wanderfund-backend.onrender.com/api';
   static const String apiVersion = 'v1';
   static const int connectionTimeout = 30000; // milliseconds
   static const int receiveTimeout = 30000; // milliseconds
@@ -10,7 +12,7 @@ class AppConstants {
   static const String loginEndpoint = '$baseUrl/$apiVersion/login';
   static const String registerEndpoint = '$baseUrl/$apiVersion/register';
   static const String logoutEndpoint = '$baseUrl/$apiVersion/logout';
-  static const String getUserEndpoint = '$baseUrl/api/$apiVersion/user';
+  static const String getUserEndpoint = '$baseUrl/$apiVersion/user';
   static String travelFundsEndpoint(String userId) =>
       '$baseUrl/$apiVersion/wanderfund/$userId';
   static String travelFundInviteEndpoint(String publicId) =>
