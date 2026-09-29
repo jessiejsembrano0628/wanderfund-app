@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -43,11 +45,21 @@ class _RegisterPageState extends State<RegisterPage> {
       if (firstNameError != null) return firstNameError;
       final lastNameError = _required(_lastNameController.text, 'Last name');
       if (lastNameError != null) return lastNameError;
-      return _required(_mobileController.text, 'Mobile number');
+      final mobileNumber = _mobileController.text.trim();
+      if (mobileNumber.isEmpty) return 'Mobile number is required';
+      if (mobileNumber.length != 10 || !mobileNumber.startsWith('9')) {
+        return 'Enter a valid Philippine mobile number';
+      }
+      return null;
     }
 
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) return 'Enter a valid email';
+    final atIndex = email.indexOf('@');
+    if (!EmailValidator.validate(email) ||
+        atIndex <= 0 ||
+        email.substring(0, atIndex).contains('+')) {
+      return 'Enter a valid email';
+    }
     if (_passwordController.text.length < 8) {
       return 'Password must be at least 8 characters';
     }
@@ -78,7 +90,7 @@ class _RegisterPageState extends State<RegisterPage> {
       password: _passwordController.text,
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
-      mobileNumber: _mobileController.text.trim(),
+      mobileNumber: '+63${_mobileController.text.trim()}',
     );
 
     if (success && mounted) {
@@ -125,6 +137,11 @@ class _RegisterPageState extends State<RegisterPage> {
                       'Mobile number',
                       Icons.phone,
                       keyboardType: TextInputType.phone,
+                      prefixText: '+63',
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
                     ),
                   ] else ...[
                     _field(
@@ -200,13 +217,17 @@ class _RegisterPageState extends State<RegisterPage> {
     String label,
     IconData icon, {
     TextInputType? keyboardType,
+    String? prefixText,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
+        prefixText: prefixText,
         border: const OutlineInputBorder(),
       ),
     );
