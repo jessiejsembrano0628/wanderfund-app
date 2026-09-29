@@ -92296,7 +92296,7 @@ case 403:throw A.i(A.aDY("Access forbidden"))
 case 404:throw A.i(A.cV("404","Resource not found"))
 case 500:throw A.i(A.cV("500","Internal server error"))
 default:throw A.i(A.cV(B.i.k(s),"Unknown error occurred"))}},
-Fw(a){var s="application/json",r=t.N,q=A.ar(["Content-Type",s,"Accept",s],r,r)
+Fw(a){var s="application/json",r=t.N,q=A.ar(["Content-Type",s,"Accept",s,"ngrok-skip-browser-warning","true"],r,r)
 if(a!=null&&a.length!==0)q.m(0,"Authorization","Bearer "+a)
 return q}}
 A.a19.prototype={
