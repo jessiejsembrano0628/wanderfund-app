@@ -39,10 +39,10 @@ void main() {
       expect(provider.errorMessage, isNull);
     });
 
-    test('does not offer retry for an invalid session', () async {
+    test('treats a missing token as a signed-out session', () async {
       final repository = _FakeAuthRepository(
         currentUserResult: const Left(
-          AuthenticationFailure(message: 'Unauthorized'),
+          AuthenticationFailure(message: 'No token found'),
         ),
       );
       final provider = _createProvider(repository);
@@ -51,6 +51,7 @@ void main() {
 
       expect(provider.isAuthenticated, isFalse);
       expect(provider.canRetryInitialization, isFalse);
+      expect(provider.errorMessage, isNull);
     });
   });
 

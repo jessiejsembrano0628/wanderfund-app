@@ -44,7 +44,9 @@ class AuthProvider extends ChangeNotifier {
       (failure) {
         _user = null;
         _isAuthenticated = false;
-        _errorMessage = failure.message;
+        _errorMessage = failure is AuthenticationFailure
+            ? null
+            : failure.message;
         _canRetryInitialization = failure is! AuthenticationFailure;
       },
       (user) {
