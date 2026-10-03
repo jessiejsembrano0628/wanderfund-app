@@ -44,10 +44,12 @@ class AuthProvider extends ChangeNotifier {
       (failure) {
         _user = null;
         _isAuthenticated = false;
-        _errorMessage = failure is AuthenticationFailure
-            ? null
-            : failure.message;
-        _canRetryInitialization = failure is! AuthenticationFailure;
+        final signedOut =
+            failure is AuthenticationFailure ||
+            (failure is ServerFailure &&
+                (failure.code == '404' || failure.code == '504'));
+        _errorMessage = signedOut ? null : failure.message;
+        _canRetryInitialization = !signedOut;
       },
       (user) {
         _user = user;

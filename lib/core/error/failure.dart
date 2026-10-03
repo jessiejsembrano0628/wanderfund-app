@@ -14,7 +14,12 @@ class NetworkFailure extends Failure {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure({super.message = 'Server error'});
+  final String? code;
+
+  const ServerFailure({super.message = 'Server error', this.code});
+
+  @override
+  List<Object?> get props => [message, code];
 }
 
 class CacheFailure extends Failure {

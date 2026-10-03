@@ -104,7 +104,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await tokenStorage.deleteToken();
       return Left(AuthenticationFailure(message: e.message));
     } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+      return Left(ServerFailure(message: e.message, code: e.code));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
     } catch (e) {

@@ -53,6 +53,38 @@ void main() {
       expect(provider.canRetryInitialization, isFalse);
       expect(provider.errorMessage, isNull);
     });
+
+    for (final statusCode in ['404', '504']) {
+      test('shows the login state for server $statusCode', () async {
+        final repository = _FakeAuthRepository(
+          currentUserResult: Left(
+            ServerFailure(message: 'Server error', code: statusCode),
+          ),
+        );
+        final provider = _createProvider(repository);
+
+        await provider.initialize();
+
+        expect(provider.isAuthenticated, isFalse);
+        expect(provider.canRetryInitialization, isFalse);
+        expect(provider.errorMessage, isNull);
+      });
+    }
+
+    test('allows retry after other server failures', () async {
+      final repository = _FakeAuthRepository(
+        currentUserResult: const Left(
+          ServerFailure(message: 'Internal server error', code: '500'),
+        ),
+      );
+      final provider = _createProvider(repository);
+
+      await provider.initialize();
+
+      expect(provider.isAuthenticated, isFalse);
+      expect(provider.canRetryInitialization, isTrue);
+      expect(provider.errorMessage, 'Internal server error');
+    });
   });
 
   group('AuthRepositoryImpl.getCurrentUser token handling', () {
@@ -77,6 +109,33 @@ void main() {
       expect(result.isLeft(), isTrue);
       expect(repository.tokenStorage.getToken(), isNull);
     });
+
+    for (final statusCode in ['404', '504']) {
+      test('preserves server status $statusCode without clearing token', () async {
+        final repository = await _createRepository(
+          currentUserException: ServerException(
+            message: 'Server error',
+            code: statusCode,
+          ),
+        );
+
+        final result = await repository.repository.getCurrentUser();
+        final failure = result.fold<Failure?>(
+          (failure) => failure,
+          (_) => null,
+        );
+
+        expect(
+          failure,
+          isA<ServerFailure>().having(
+            (failure) => failure.code,
+            'code',
+            statusCode,
+          ),
+        );
+        expect(repository.tokenStorage.getToken(), 'saved-token');
+      });
+    }
   });
 }
 
