@@ -145,7 +145,8 @@ void main() {
                       'date_created': '2026-09-27 23:11:02.252688 +0800 +08',
                       'amount': 25000,
                       'initiated_by': 'Jessie James',
-                      'status': 'REQUESTED',
+                      'status': 'REJECTED',
+                      'reject_reason': 'Missing receipt',
                     },
                   ],
                   'err': null,
@@ -158,18 +159,20 @@ void main() {
 
         final requests = await source.getTransactionApprovalRequests(
           publicId: 'fund-123',
+          status: 'REJECTED',
           token: 'token',
         );
 
         expect(capturedRequest!.method, 'GET');
         expect(
           capturedRequest!.url.toString(),
-          'https://wanderfund-backend.onrender.com/api/v1/wanderfund/transactions/fund-123/approval-requests',
+          'https://wanderfund-backend.onrender.com/api/v1/wanderfund/transactions/fund-123/approval-requests?status=REJECTED',
         );
         expect(requests.single.id, 'transaction-123');
         expect(requests.single.travelFundId, 'fund-123');
         expect(requests.single.initiatedBy, 'Jessie James');
-        expect(requests.single.status, 'REQUESTED');
+        expect(requests.single.status, 'REJECTED');
+        expect(requests.single.rejectReason, 'Missing receipt');
         expect(requests.single.createdAt, isNotNull);
       },
     );

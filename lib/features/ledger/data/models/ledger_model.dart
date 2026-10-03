@@ -8,6 +8,7 @@ class TransactionEntry extends Equatable {
   final double amount;
   final String initiatedBy;
   final String status;
+  final String rejectReason;
   final DateTime? createdAt;
 
   const TransactionEntry({
@@ -18,6 +19,7 @@ class TransactionEntry extends Equatable {
     required this.amount,
     this.initiatedBy = '',
     required this.status,
+    this.rejectReason = '',
     this.createdAt,
   });
 
@@ -30,6 +32,7 @@ class TransactionEntry extends Equatable {
       amount: _toDouble(json['amount']),
       initiatedBy: (json['initiated_by'] ?? '').toString(),
       status: (json['status'] ?? '').toString(),
+      rejectReason: (json['reject_reason'] ?? '').toString(),
       createdAt: _toDateTime(
         json['date_created'] ??
             json['created_at'] ??
@@ -80,6 +83,7 @@ class TransactionEntry extends Equatable {
     amount,
     initiatedBy,
     status,
+    rejectReason,
     createdAt,
   ];
 }

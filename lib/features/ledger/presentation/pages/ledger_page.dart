@@ -157,24 +157,24 @@ class _LedgerPageState extends State<LedgerPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _openTransactionApprovalPage() {
+  void _openTransactionApprovalPage({required bool canManageRequests}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => TransactionApprovalPage(publicId: widget.publicId),
+        builder: (_) => TransactionApprovalPage(
+          publicId: widget.publicId,
+          canManageRequests: canManageRequests,
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final canManageRequests = context
-        .watch<TravelFundProvider>()
-        .funds
-        .any(
-          (fund) =>
-              fund.publicId == widget.publicId &&
-              fund.role.trim().toLowerCase() == 'main',
-        );
+    final canManageRequests = context.watch<TravelFundProvider>().funds.any(
+      (fund) =>
+          fund.publicId == widget.publicId &&
+          fund.role.trim().toLowerCase() == 'main',
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -185,12 +185,13 @@ class _LedgerPageState extends State<LedgerPage> {
             icon: const Icon(Icons.add_card_outlined),
             tooltip: 'Create transaction',
           ),
-          if (canManageRequests)
-            IconButton(
-              onPressed: _openTransactionApprovalPage,
-              icon: const Icon(Icons.fact_check_outlined),
-              tooltip: 'Transaction approvals',
+          IconButton(
+            onPressed: () => _openTransactionApprovalPage(
+              canManageRequests: canManageRequests,
             ),
+            icon: const Icon(Icons.fact_check_outlined),
+            tooltip: 'Transaction approvals',
+          ),
           if (canManageRequests)
             IconButton(
               onPressed: _openJoinRequestsPage,
@@ -410,8 +411,13 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
 
 class TransactionApprovalPage extends StatefulWidget {
   final String publicId;
+  final bool canManageRequests;
 
-  const TransactionApprovalPage({super.key, required this.publicId});
+  const TransactionApprovalPage({
+    super.key,
+    required this.publicId,
+    this.canManageRequests = false,
+  });
 
   @override
   State<TransactionApprovalPage> createState() =>
@@ -419,6 +425,9 @@ class TransactionApprovalPage extends StatefulWidget {
 }
 
 class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
+  static const _statuses = ['REQUESTED', 'APPROVED', 'REJECTED'];
+
+  String _selectedStatus = 'REQUESTED';
   bool _loading = true;
   String? _errorMessage;
 
@@ -435,7 +444,10 @@ class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
     });
     final error = await context
         .read<LedgerProvider>()
-        .loadTransactionApprovalRequests(publicId: widget.publicId);
+        .loadTransactionApprovalRequests(
+          publicId: widget.publicId,
+          status: _selectedStatus,
+        );
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -449,6 +461,7 @@ class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
         builder: (_) => TransactionRequestDetailsPage(
           publicId: widget.publicId,
           request: request,
+          canManageRequests: widget.canManageRequests,
         ),
       ),
     );
@@ -462,91 +475,124 @@ class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Transaction approvals')),
-      body: Consumer<LedgerProvider>(
-        builder: (context, provider, _) {
-          if (_loading) return const Center(child: CircularProgressIndicator());
-          if (_errorMessage != null) {
-            return _MessageState(
-              message: _errorMessage!,
-              actionLabel: 'Retry',
-              onAction: _loadRequests,
-            );
-          }
-          final requests = provider.transactionApprovalRequests;
-          if (requests.isEmpty) {
-            return const _MessageState(
-              message: 'No transaction requests to review.',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: _loadRequests,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: requests.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, index) {
-                final request = requests[index];
-                final amountColor = request.amount >= 0
-                    ? Colors.green.shade700
-                    : Colors.red.shade700;
-                return Card(
-                  child: Padding(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: DropdownButtonFormField<String>(
+              initialValue: _selectedStatus,
+              decoration: const InputDecoration(labelText: 'Status'),
+              items: _statuses
+                  .map(
+                    (status) =>
+                        DropdownMenuItem(value: status, child: Text(status)),
+                  )
+                  .toList(),
+              onChanged: (status) {
+                if (status == null) return;
+                setState(() => _selectedStatus = status);
+                _loadRequests();
+              },
+            ),
+          ),
+          Expanded(
+            child: Consumer<LedgerProvider>(
+              builder: (context, provider, _) {
+                if (_loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (_errorMessage != null) {
+                  return _MessageState(
+                    message: _errorMessage!,
+                    actionLabel: 'Retry',
+                    onAction: _loadRequests,
+                  );
+                }
+                final requests = provider.transactionApprovalRequests;
+                if (requests.isEmpty) {
+                  return const _MessageState(
+                    message: 'No transaction requests to review.',
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: _loadRequests,
+                  child: ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                request.description.isEmpty
-                                    ? 'Transaction request'
-                                    : request.description,
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ),
-                            Text(
-                              '${request.amount < 0 ? '-' : ''}${_formatMoney(request.amount)}',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: amountColor,
-                                    fontWeight: FontWeight.bold,
+                    itemCount: requests.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final request = requests[index];
+                      final amountColor = request.amount >= 0
+                          ? Colors.green.shade700
+                          : Colors.red.shade700;
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      request.description.isEmpty
+                                          ? 'Transaction request'
+                                          : request.description,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleMedium,
+                                    ),
                                   ),
-                            ),
-                          ],
+                                  Text(
+                                    _formatMoney(request.amount),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: amountColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              SelectableText(
+                                'Transaction ID: ${request.id.isEmpty ? 'Unavailable' : request.id}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              Text(
+                                'Requested by ${request.initiatedBy.isEmpty ? 'Unknown' : request.initiatedBy}',
+                              ),
+                              if (request.createdAt != null)
+                                Text(_formatDateTime(request.createdAt!)),
+                              if (request.referenceId.isNotEmpty)
+                                Text('Reference: ${request.referenceId}'),
+                              if (request.status.toUpperCase() == 'REJECTED' &&
+                                  request.rejectReason.trim().isNotEmpty)
+                                Text('Reject reason: ${request.rejectReason}'),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Chip(label: Text(request.status)),
+                                  const Spacer(),
+                                  FilledButton.tonalIcon(
+                                    onPressed: () => _openDetails(request),
+                                    icon: const Icon(Icons.visibility_outlined),
+                                    label: const Text('View details'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        SelectableText(
-                          'Transaction ID: ${request.id.isEmpty ? 'Unavailable' : request.id}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        Text(
-                          'Requested by ${request.initiatedBy.isEmpty ? 'Unknown' : request.initiatedBy}',
-                        ),
-                        if (request.createdAt != null)
-                          Text(_formatDateTime(request.createdAt!)),
-                        if (request.referenceId.isNotEmpty)
-                          Text('Reference: ${request.referenceId}'),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Chip(label: Text(request.status)),
-                            const Spacer(),
-                            FilledButton.tonalIcon(
-                              onPressed: () => _openDetails(request),
-                              icon: const Icon(Icons.visibility_outlined),
-                              label: const Text('View details'),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -555,11 +601,13 @@ class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
 class TransactionRequestDetailsPage extends StatefulWidget {
   final String publicId;
   final TransactionEntry request;
+  final bool canManageRequests;
 
   const TransactionRequestDetailsPage({
     super.key,
     required this.publicId,
     required this.request,
+    this.canManageRequests = false,
   });
 
   @override
@@ -646,7 +694,7 @@ class _TransactionRequestDetailsPageState
           ),
           const SizedBox(height: 8),
           Text(
-            '${request.amount < 0 ? '-' : ''}${_formatMoney(request.amount)}',
+            _formatMoney(request.amount),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: request.amount < 0
                   ? Colors.red.shade700
@@ -657,8 +705,6 @@ class _TransactionRequestDetailsPageState
           const SizedBox(height: 16),
           const Divider(height: 1),
           _detailRow(context, 'Transaction ID', request.id),
-          const Divider(height: 1),
-          _detailRow(context, 'Travel fund ID', request.travelFundId),
           const Divider(height: 1),
           _detailRow(context, 'Reference ID', request.referenceId),
           const Divider(height: 1),
@@ -677,6 +723,11 @@ class _TransactionRequestDetailsPageState
           _detailRow(context, 'Initiated by', request.initiatedBy),
           const Divider(height: 1),
           _detailRow(context, 'Status', request.status),
+          if (request.status.toUpperCase() == 'REJECTED' &&
+              request.rejectReason.trim().isNotEmpty) ...[
+            const Divider(height: 1),
+            _detailRow(context, 'Reject reason', request.rejectReason),
+          ],
           if (isRequested && request.id.isEmpty) ...[
             const SizedBox(height: 16),
             Text(
@@ -688,7 +739,7 @@ class _TransactionRequestDetailsPageState
           ],
         ],
       ),
-      bottomNavigationBar: isRequested
+      bottomNavigationBar: isRequested && widget.canManageRequests
           ? SafeArea(
               minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Row(
@@ -772,10 +823,7 @@ class _RejectTransactionDialogState extends State<_RejectTransactionDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _reject,
-          child: const Text('Reject request'),
-        ),
+        FilledButton(onPressed: _reject, child: const Text('Reject request')),
       ],
     );
   }
@@ -1055,6 +1103,7 @@ String _formatDateTime(DateTime dateTime) {
 }
 
 String _formatMoney(double amount) {
+  final sign = amount.isNegative ? '-' : '';
   final fixed = amount.abs().toStringAsFixed(2);
   final parts = fixed.split('.');
   final integerPart = parts[0];
@@ -1065,5 +1114,5 @@ String _formatMoney(double amount) {
     }
     grouped.write(integerPart[index]);
   }
-  return 'PHP $grouped.${parts[1]}';
+  return '${sign}PHP $grouped.${parts[1]}';
 }

@@ -23,8 +23,10 @@ abstract class LedgerRepository {
     required String description,
     required String referenceId,
   });
-  Future<Either<Failure, List<TransactionEntry>>> getTransactionApprovalRequests({
+  Future<Either<Failure, List<TransactionEntry>>>
+  getTransactionApprovalRequests({
     required String publicId,
+    required String status,
   });
   Future<Either<Failure, String>> updateTransactionApproval({
     required String publicId,

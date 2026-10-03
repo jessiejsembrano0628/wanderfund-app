@@ -82,8 +82,12 @@ class GetTransactionApprovalRequestsUsecase {
 
   Future<Either<Failure, List<TransactionEntry>>> call({
     required String publicId,
+    required String status,
   }) {
-    return repository.getTransactionApprovalRequests(publicId: publicId);
+    return repository.getTransactionApprovalRequests(
+      publicId: publicId,
+      status: status,
+    );
   }
 }
 

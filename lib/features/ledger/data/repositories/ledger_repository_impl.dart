@@ -151,6 +151,7 @@ class LedgerRepositoryImpl implements LedgerRepository {
   @override
   Future<Either<Failure, List<TransactionEntry>>> getTransactionApprovalRequests({
     required String publicId,
+    required String status,
   }) async {
     try {
       final token = tokenStorage.getToken();
@@ -159,6 +160,7 @@ class LedgerRepositoryImpl implements LedgerRepository {
       }
       return Right(await remoteDataSource.getTransactionApprovalRequests(
         publicId: publicId,
+        status: status,
         token: token,
       ));
     } on AuthenticationException catch (e) {

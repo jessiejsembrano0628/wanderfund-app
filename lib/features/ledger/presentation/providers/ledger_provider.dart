@@ -112,9 +112,11 @@ class LedgerProvider extends ChangeNotifier {
 
   Future<String?> loadTransactionApprovalRequests({
     required String publicId,
+    required String status,
   }) async {
     final result = await getTransactionApprovalRequestsUsecase(
       publicId: publicId,
+      status: status,
     );
     return result.fold((failure) {
       _transactionApprovalRequests = const [];

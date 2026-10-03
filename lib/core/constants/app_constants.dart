@@ -1,9 +1,7 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl =
-      'https://wanderfund-backend.onrender.com/api';
-  static const String travelFundCommandBaseUrl =
-      'https://wanderfund-backend.onrender.com/api';
+  static const String baseUrl = 'https://wanderfund-backend.onrender.com/api';
+  static const String travelFundCommandBaseUrl = 'https://wanderfund-backend.onrender.com/api';
   static const String apiVersion = 'v1';
   static const int connectionTimeout = 30000; // milliseconds
   static const int receiveTimeout = 30000; // milliseconds
@@ -29,8 +27,11 @@ class AppConstants {
       '$baseUrl/$apiVersion/wanderfund/group-join-request/$publicId/reject';
   static const String createTransactionEndpoint =
       '$baseUrl/$apiVersion/wanderfund/transactions/create';
-  static String transactionApprovalRequestsEndpoint(String publicId) =>
-      '$baseUrl/$apiVersion/wanderfund/transactions/$publicId/approval-requests';
+  static String transactionApprovalRequestsEndpoint(
+    String publicId, {
+    required String status,
+  }) =>
+      '$baseUrl/$apiVersion/wanderfund/transactions/$publicId/approval-requests?status=$status';
   static const String approveTransactionEndpoint =
       '$baseUrl/$apiVersion/wanderfund/transactions/approve';
   static const String rejectTransactionEndpoint =

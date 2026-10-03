@@ -30,6 +30,7 @@ abstract class LedgerRemoteDataSource {
   });
   Future<List<TransactionEntry>> getTransactionApprovalRequests({
     required String publicId,
+    required String status,
     required String token,
   });
   Future<String> updateTransactionApproval({
@@ -191,10 +192,14 @@ class LedgerRemoteDataSourceImpl implements LedgerRemoteDataSource {
   @override
   Future<List<TransactionEntry>> getTransactionApprovalRequests({
     required String publicId,
+    required String status,
     required String token,
   }) async {
     final response = await apiService.get(
-      endpoint: AppConstants.transactionApprovalRequestsEndpoint(publicId),
+      endpoint: AppConstants.transactionApprovalRequestsEndpoint(
+        publicId,
+        status: status,
+      ),
       token: token,
     );
     if (response is! Map<String, dynamic>) {
