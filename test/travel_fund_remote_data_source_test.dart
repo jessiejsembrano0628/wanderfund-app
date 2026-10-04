@@ -39,7 +39,7 @@ void main() {
       expect(capturedRequest!.method, 'GET');
       expect(
         capturedRequest!.url.toString(),
-        'http://localhost:8080/api/v1/wanderfund/invite/fund-123',
+        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/invite/fund-123',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer token');
     });
@@ -112,7 +112,7 @@ void main() {
       expect(capturedRequest!.method, 'PUT');
       expect(
         capturedRequest!.url.toString(),
-        'http://localhost:8080/api/v1/wanderfund/archive/fund-123',
+        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/archive/fund-123',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer token');
       expect(capturedRequest!.body, '{}');

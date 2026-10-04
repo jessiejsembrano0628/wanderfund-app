@@ -1,7 +1,7 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'http://localhost:8080/api';
-  static const String travelFundCommandBaseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'https://wanderfund-backend.onrender.com/api';
+  static const String travelFundCommandBaseUrl = 'https://wanderfund-backend.onrender.com/api';
   static const String apiVersion = 'v1';
   static const int connectionTimeout = 30000; // milliseconds
   static const int receiveTimeout = 30000; // milliseconds
