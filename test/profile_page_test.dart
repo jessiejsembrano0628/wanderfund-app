@@ -20,6 +20,7 @@ void main() {
           id: 'restored-user',
           email: 'user@example.com',
           name: 'Restored User',
+          mobileNumber: '555-0100',
           createdAt: DateTime(2025, 1, 2),
         ),
       ),
@@ -35,9 +36,30 @@ void main() {
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('user@example.com'), findsOneWidget);
     expect(find.text('Mobile number'), findsOneWidget);
-    expect(find.text('Not available'), findsOneWidget);
+    expect(find.text('555-0100'), findsOneWidget);
     expect(find.text('Member since'), findsOneWidget);
     expect(find.text('2025-01-02'), findsOneWidget);
+  });
+
+  testWidgets('shows unavailable when a restored user has no phone number', (
+    tester,
+  ) async {
+    final authProvider = _createAuthProvider(
+      _FakeAuthRepository(
+        currentUser: UserEntity(
+          id: 'restored-user',
+          email: 'user@example.com',
+          name: 'Restored User',
+          createdAt: DateTime(2025, 1, 2),
+        ),
+      ),
+    );
+    addTearDown(authProvider.dispose);
+    await authProvider.initialize();
+
+    await _pumpProfile(tester, authProvider);
+
+    expect(find.text('Not available'), findsOneWidget);
   });
 
   testWidgets('shows login details including the current phone number', (

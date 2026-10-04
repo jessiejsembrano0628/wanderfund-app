@@ -17,7 +17,10 @@ class ProfilePage extends StatelessWidget {
               : authProvider.user?.name ?? 'Unknown User';
           final email =
               userDetails?.email ?? authProvider.user?.email ?? 'Not available';
-          final phone = userDetails?.mobileNumber ?? 'Not available';
+            final phone =
+              userDetails?.mobileNumber ??
+              authProvider.user?.mobileNumber ??
+              'Not available';
           final createdAt = authProvider.user?.createdAt;
 
           return Padding(

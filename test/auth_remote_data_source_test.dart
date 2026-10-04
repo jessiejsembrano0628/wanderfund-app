@@ -22,6 +22,7 @@ void main() {
                   'id': 'user-123',
                   'email': 'user@example.com',
                   'name': 'Wander User',
+                  'mobileNumber': '555-0100',
                   'createdAt': '2025-01-01T00:00:00.000Z',
                 },
               }),
@@ -40,6 +41,32 @@ void main() {
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer saved-token');
       expect(user.id, 'user-123');
+      expect(user.mobileNumber, '555-0100');
     },
   );
+
+  test('accepts current-user responses without a mobile number', () async {
+    final source = AuthRemoteDataSourceImpl(
+      apiService: ApiService(
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'success': true,
+              'data': {
+                'id': 'user-123',
+                'email': 'user@example.com',
+                'name': 'Wander User',
+                'createdAt': '2025-01-01T00:00:00.000Z',
+              },
+            }),
+            200,
+          ),
+        ),
+      ),
+    );
+
+    final user = await source.getCurrentUser('saved-token');
+
+    expect(user.mobileNumber, isNull);
+  });
 }
