@@ -5,18 +5,31 @@ import 'features/auth/presentation/pages/login_page.dart';
 import 'features/main_menu/presentation/pages/main_menu_page.dart';
 
 /// Wrapper widget that handles routing based on authentication state
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
+  Widget build(BuildContext context) {
+    return AuthRouteGate(authenticatedBuilder: (_) => const MainMenuPage());
+  }
 }
 
-class _AuthWrapperState extends State<AuthWrapper> {
+class AuthRouteGate extends StatefulWidget {
+  final WidgetBuilder authenticatedBuilder;
+
+  const AuthRouteGate({super.key, required this.authenticatedBuilder});
+
+  @override
+  State<AuthRouteGate> createState() => _AuthRouteGateState();
+}
+
+class _AuthRouteGateState extends State<AuthRouteGate> {
   @override
   void initState() {
     super.initState();
-    context.read<AuthProvider>().initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthProvider>().initialize();
+    });
   }
 
   @override
@@ -55,10 +68,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
         if (authProvider.isAuthenticated) {
-          return const MainMenuPage();
-        } else {
-          return const LoginPage();
+          return widget.authenticatedBuilder(context);
         }
+        return const LoginPage();
       },
     );
   }

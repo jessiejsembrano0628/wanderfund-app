@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wanderfund_app/core/constants/app_constants.dart';
 import 'package:wanderfund_app/core/error/exceptions.dart';
@@ -11,11 +15,46 @@ import 'package:wanderfund_app/features/auth/data/repositories/auth_repository_i
 import 'package:wanderfund_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:wanderfund_app/features/auth/domain/usecases/auth_usecase.dart';
 import 'package:wanderfund_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:wanderfund_app/auth_wrapper.dart';
 import 'package:wanderfund_app/shared/entities/user_details_entity.dart';
 import 'package:wanderfund_app/shared/entities/user_entity.dart';
 import 'package:wanderfund_app/shared/models/user_model.dart';
 
 void main() {
+  testWidgets('protected destination waits for session restoration', (
+    tester,
+  ) async {
+    final repository = _CompleterAuthRepository();
+    final provider = _createProvider(repository);
+    addTearDown(provider.dispose);
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthProvider>.value(
+        value: provider,
+        child: MaterialApp(
+          home: AuthRouteGate(
+            authenticatedBuilder: (_) => const Text('Protected destination'),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Login'), findsNothing);
+    expect(find.text('Protected destination'), findsNothing);
+    expect(repository.currentUserRequestCount, 1);
+
+    await provider.initialize();
+    expect(repository.currentUserRequestCount, 1);
+
+    repository.complete(Right(_user));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Protected destination'), findsOneWidget);
+    expect(find.text('Login'), findsNothing);
+  });
+
   group('AuthProvider.initialize', () {
     test('allows retry after a recoverable failure', () async {
       final repository = _FakeAuthRepository(
@@ -111,30 +150,33 @@ void main() {
     });
 
     for (final statusCode in ['404', '504']) {
-      test('preserves server status $statusCode without clearing token', () async {
-        final repository = await _createRepository(
-          currentUserException: ServerException(
-            message: 'Server error',
-            code: statusCode,
-          ),
-        );
+      test(
+        'preserves server status $statusCode without clearing token',
+        () async {
+          final repository = await _createRepository(
+            currentUserException: ServerException(
+              message: 'Server error',
+              code: statusCode,
+            ),
+          );
 
-        final result = await repository.repository.getCurrentUser();
-        final failure = result.fold<Failure?>(
-          (failure) => failure,
-          (_) => null,
-        );
+          final result = await repository.repository.getCurrentUser();
+          final failure = result.fold<Failure?>(
+            (failure) => failure,
+            (_) => null,
+          );
 
-        expect(
-          failure,
-          isA<ServerFailure>().having(
-            (failure) => failure.code,
-            'code',
-            statusCode,
-          ),
-        );
-        expect(repository.tokenStorage.getToken(), 'saved-token');
-      });
+          expect(
+            failure,
+            isA<ServerFailure>().having(
+              (failure) => failure.code,
+              'code',
+              statusCode,
+            ),
+          );
+          expect(repository.tokenStorage.getToken(), 'saved-token');
+        },
+      );
     }
   });
 }
@@ -146,7 +188,7 @@ final _user = UserEntity(
   createdAt: DateTime.utc(2025),
 );
 
-AuthProvider _createProvider(_FakeAuthRepository repository) {
+AuthProvider _createProvider(AuthRepository repository) {
   return AuthProvider(
     loginUsecase: LoginUsecase(repository: repository),
     registerUsecase: RegisterUsecase(repository: repository),
@@ -163,6 +205,39 @@ class _FakeAuthRepository implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> getCurrentUser() async =>
       currentUserResult;
+
+  @override
+  Future<Either<Failure, UserDetailsEntity>> login({
+    required String email,
+    required String password,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, void>> register({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    required String mobileNumber,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, void>> logout() async => throw UnimplementedError();
+}
+
+class _CompleterAuthRepository implements AuthRepository {
+  final Completer<Either<Failure, UserEntity>> _currentUser = Completer();
+  int currentUserRequestCount = 0;
+
+  void complete(Either<Failure, UserEntity> result) {
+    _currentUser.complete(result);
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> getCurrentUser() {
+    currentUserRequestCount++;
+    return _currentUser.future;
+  }
 
   @override
   Future<Either<Failure, UserDetailsEntity>> login({

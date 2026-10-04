@@ -119,6 +119,16 @@ class _SessionShellState extends State<_SessionShell> {
     final isPublicRoute =
         settings.name == '/login' || settings.name == '/register';
     final authProvider = context.read<AuthProvider>();
+    if (!isPublicRoute &&
+        (!authProvider.isInitialized ||
+            authProvider.isLoading ||
+            authProvider.canRetryInitialization)) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) =>
+            AuthRouteGate(authenticatedBuilder: (_) => _pageForRoute(settings)),
+      );
+    }
     if (!isPublicRoute && !authProvider.isAuthenticated) {
       return MaterialPageRoute<void>(
         settings: const RouteSettings(name: '/login'),
@@ -126,29 +136,32 @@ class _SessionShellState extends State<_SessionShell> {
       );
     }
 
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => _pageForRoute(settings),
+    );
+  }
+
+  Widget _pageForRoute(RouteSettings settings) {
     switch (settings.name) {
       case '/login':
-        return MaterialPageRoute<void>(builder: (_) => const LoginPage());
+        return const LoginPage();
       case '/register':
-        return MaterialPageRoute<void>(builder: (_) => const RegisterPage());
+        return const RegisterPage();
       case '/menu':
-        return MaterialPageRoute<void>(builder: (_) => const MainMenuPage());
+        return const MainMenuPage();
       case '/profile':
-        return MaterialPageRoute<void>(builder: (_) => const ProfilePage());
+        return const ProfilePage();
       case '/ledger':
         final publicId = settings.arguments;
         if (publicId is! String || publicId.isEmpty) {
-          return MaterialPageRoute<void>(builder: (_) => const MainMenuPage());
+          return const MainMenuPage();
         }
-        return MaterialPageRoute<void>(
-          builder: (_) => LedgerPage(publicId: publicId),
-        );
+        return LedgerPage(publicId: publicId);
       case '/create-travel-fund':
-        return MaterialPageRoute<void>(
-          builder: (_) => const CreateTravelFundPage(),
-        );
+        return const CreateTravelFundPage();
       default:
-        return MaterialPageRoute<void>(builder: (_) => const LoginPage());
+        return const LoginPage();
     }
   }
 }

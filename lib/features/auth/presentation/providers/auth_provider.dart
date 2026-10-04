@@ -34,7 +34,7 @@ class AuthProvider extends ChangeNotifier {
   });
 
   Future<void> initialize() async {
-    if (_isInitialized && !_canRetryInitialization) return;
+    if (_isLoading || (_isInitialized && !_canRetryInitialization)) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
