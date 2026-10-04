@@ -18,69 +18,51 @@ class ProfilePage extends StatelessWidget {
           final email =
               userDetails?.email ?? authProvider.user?.email ?? 'Not available';
           final phone = userDetails?.mobileNumber ?? 'Not available';
+          final createdAt = authProvider.user?.createdAt;
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          email,
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: Colors.grey[700]),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Phone: $phone',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: Colors.grey[700]),
-                        ),
-                      ],
+            child: Card(
+              elevation: 2,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Account details',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Account details',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  leading: const Icon(Icons.person),
-                  title: const Text('Full name'),
-                  subtitle: Text(displayName),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.email),
-                  title: const Text('Email'),
-                  subtitle: Text(email),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.phone),
-                  title: const Text('Mobile number'),
-                  subtitle: Text(phone),
-                ),
-                if (authProvider.user != null)
+                  const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.calendar_today),
-                    title: const Text('Member since'),
-                    subtitle: Text(
-                      '${authProvider.user!.createdAt.year}-${authProvider.user!.createdAt.month.toString().padLeft(2, '0')}-${authProvider.user!.createdAt.day.toString().padLeft(2, '0')}',
-                    ),
+                    leading: const Icon(Icons.person),
+                    title: const Text('Full name'),
+                    subtitle: Text(displayName),
                   ),
-              ],
+                  ListTile(
+                    leading: const Icon(Icons.email),
+                    title: const Text('Email'),
+                    subtitle: Text(email),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.phone),
+                    title: const Text('Mobile number'),
+                    subtitle: Text(phone),
+                  ),
+                  if (createdAt != null)
+                    ListTile(
+                      leading: const Icon(Icons.calendar_today),
+                      title: const Text('Member since'),
+                      subtitle: Text(
+                        '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}',
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },
