@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/theme/app_theme.dart';
 import 'core/services/idle_session_manager.dart';
 import 'service_locator.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -103,10 +104,7 @@ class _SessionShellState extends State<_SessionShell> {
         },
         child: MaterialApp(
           title: 'WanderFund',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.light,
           home: const AuthWrapper(),
           navigatorKey: _navigatorKey,
           onGenerateRoute: _generateRoute,

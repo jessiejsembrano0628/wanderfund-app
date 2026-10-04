@@ -560,7 +560,7 @@ class _TransactionApprovalPageState extends State<TransactionApprovalPage> {
                     itemBuilder: (context, index) {
                       final request = requests[index];
                       final amountColor = request.amount >= 0
-                          ? Colors.green.shade700
+                          ? Theme.of(context).colorScheme.primary
                           : Colors.red.shade700;
                       return Card(
                         child: Padding(
@@ -735,7 +735,7 @@ class _TransactionRequestDetailsPageState
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               color: request.amount < 0
                   ? Colors.red.shade700
-                  : Colors.green.shade700,
+                  : Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1043,7 +1043,9 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIncoming = transaction.amount >= 0;
-    final color = isIncoming ? Colors.green.shade700 : Colors.red.shade700;
+    final color = isIncoming
+        ? Theme.of(context).colorScheme.primary
+        : Colors.red.shade700;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(

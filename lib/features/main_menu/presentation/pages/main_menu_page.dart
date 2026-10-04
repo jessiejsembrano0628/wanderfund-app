@@ -268,7 +268,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
                     Text(
                       'Choose a travel fund to view its ledger.',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -459,15 +459,17 @@ class _TravelFundCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: (isActive ? Colors.green : Colors.orange)
+                        color: (isActive
+                          ? theme.colorScheme.primary
+                          : Colors.orange)
                             .withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         fund.status.isEmpty ? 'UNKNOWN' : fund.status,
                         style: theme.textTheme.labelMedium?.copyWith(
-                          color: isActive
-                              ? Colors.green.shade700
+                            color: isActive
+                              ? theme.colorScheme.primary
                               : Colors.orange.shade800,
                           fontWeight: FontWeight.bold,
                         ),
