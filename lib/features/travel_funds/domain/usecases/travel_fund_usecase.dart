@@ -50,3 +50,13 @@ class JoinTravelFundUsecase {
     return repository.joinTravelFund(inviteCode: inviteCode);
   }
 }
+
+class ArchiveTravelFundUsecase {
+  final TravelFundRepository repository;
+
+  ArchiveTravelFundUsecase({required this.repository});
+
+  Future<Either<Failure, void>> call({required String publicId}) {
+    return repository.archiveTravelFund(publicId: publicId);
+  }
+}

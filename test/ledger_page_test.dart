@@ -40,9 +40,18 @@ void main() {
           ),
         ],
       ),
+      travelFunds: const [
+        TravelFund(
+          role: 'main',
+          publicId: 'fund-123',
+          travelFundName: 'Active Fund',
+          status: 'ACTIVE',
+        ),
+      ],
     );
     final ledgerProvider = _ledgerProvider(repository);
     final travelFundProvider = _travelFundProvider(repository);
+    await travelFundProvider.loadFunds(userId: 'user-123');
     addTearDown(ledgerProvider.dispose);
     addTearDown(travelFundProvider.dispose);
 
@@ -60,6 +69,74 @@ void main() {
     expect(find.text('-PHP 1,234.50'), findsOneWidget);
     expect(find.text('-PHP 250.00'), findsOneWidget);
     expect(find.text('+PHP 500.00'), findsOneWidget);
+    expect(
+      tester
+          .widget<IconButton>(
+            find.ancestor(
+              of: find.byTooltip('Create transaction'),
+              matching: find.byType(IconButton),
+            ),
+          )
+          .onPressed,
+      isNotNull,
+    );
+  });
+
+  testWidgets('inactive funds cannot create transactions', (tester) async {
+    final repository = _FakeLedgerRepository(
+      const Ledger(publicId: 'fund-123', runningBalance: 0, transactions: []),
+      travelFunds: const [
+        TravelFund(
+          role: 'main',
+          publicId: 'fund-123',
+          travelFundName: 'Archived Fund',
+          status: 'INACTIVE',
+        ),
+      ],
+    );
+    final ledgerProvider = _ledgerProvider(repository);
+    final travelFundProvider = _travelFundProvider(repository);
+    await travelFundProvider.loadFunds(userId: 'user-123');
+    addTearDown(ledgerProvider.dispose);
+    addTearDown(travelFundProvider.dispose);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: ledgerProvider),
+          ChangeNotifierProvider.value(value: travelFundProvider),
+        ],
+        child: const MaterialApp(home: LedgerPage(publicId: 'fund-123')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final createButton = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip('Transactions are disabled for inactive funds'),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(createButton.onPressed, isNull);
+  });
+
+  testWidgets('inactive create form cannot submit', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: CreateTransactionPage(publicId: 'fund-123')),
+    );
+
+    expect(
+      find.text('Transactions are disabled for inactive funds.'),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Submit request'),
+          )
+          .onPressed,
+      isNull,
+    );
   });
 
   testWidgets('does not duplicate the minus in transaction details', (
@@ -211,15 +288,21 @@ TravelFundProvider _travelFundProvider(_FakeLedgerRepository repository) {
     ),
     createTravelFundUsecase: CreateTravelFundUsecase(repository: repository),
     joinTravelFundUsecase: JoinTravelFundUsecase(repository: repository),
+    archiveTravelFundUsecase: ArchiveTravelFundUsecase(repository: repository),
   );
 }
 
 class _FakeLedgerRepository implements LedgerRepository, TravelFundRepository {
   final Ledger ledger;
   final List<TransactionEntry> approvalRequests;
+  final List<TravelFund> travelFunds;
   final List<String> requestedApprovalStatuses = [];
 
-  _FakeLedgerRepository(this.ledger, {this.approvalRequests = const []});
+  _FakeLedgerRepository(
+    this.ledger, {
+    this.approvalRequests = const [],
+    this.travelFunds = const [],
+  });
 
   @override
   Future<Either<Failure, Ledger>> getLedger({required String publicId}) async {
@@ -278,7 +361,7 @@ class _FakeLedgerRepository implements LedgerRepository, TravelFundRepository {
   @override
   Future<Either<Failure, List<TravelFund>>> getTravelFunds({
     required String userId,
-  }) async => const Right([]);
+  }) async => Right(travelFunds);
 
   @override
   Future<Either<Failure, String>> getTravelFundInviteCode({
@@ -296,4 +379,9 @@ class _FakeLedgerRepository implements LedgerRepository, TravelFundRepository {
   Future<Either<Failure, String>> joinTravelFund({
     required String inviteCode,
   }) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, void>> archiveTravelFund({
+    required String publicId,
+  }) async => const Right(null);
 }

@@ -8,12 +8,14 @@ class TravelFundProvider extends ChangeNotifier {
   final GetTravelFundInviteCodeUsecase getTravelFundInviteCodeUsecase;
   final CreateTravelFundUsecase createTravelFundUsecase;
   final JoinTravelFundUsecase joinTravelFundUsecase;
+  final ArchiveTravelFundUsecase archiveTravelFundUsecase;
 
   TravelFundProvider({
     required this.getTravelFundsUsecase,
     required this.getTravelFundInviteCodeUsecase,
     required this.createTravelFundUsecase,
     required this.joinTravelFundUsecase,
+    required this.archiveTravelFundUsecase,
   });
 
   List<TravelFund> _funds = const [];
@@ -111,6 +113,25 @@ class TravelFundProvider extends ChangeNotifier {
     _isActionLoading = false;
     notifyListeners();
     return success ? _actionMessage : null;
+  }
+
+  Future<bool> archiveTravelFund({required String publicId}) async {
+    _startAction();
+    final result = await archiveTravelFundUsecase(publicId: publicId);
+    final success = result.fold(
+      (failure) {
+        _actionErrorMessage = failure.message;
+        return false;
+      },
+      (_) {
+        _actionErrorMessage = null;
+        _actionMessage = 'Travel fund archived.';
+        return true;
+      },
+    );
+    _isActionLoading = false;
+    notifyListeners();
+    return success;
   }
 
   String? _actionMessage;

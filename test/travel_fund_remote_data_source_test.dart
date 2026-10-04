@@ -39,7 +39,7 @@ void main() {
       expect(capturedRequest!.method, 'GET');
       expect(
         capturedRequest!.url.toString(),
-        'https://wanderfund-backend.onrender.com/api/v1/wanderfund/invite/fund-123',
+        'http://localhost:8080/api/v1/wanderfund/invite/fund-123',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer token');
     });
@@ -48,13 +48,21 @@ void main() {
       final source = TravelFundRemoteDataSourceImpl(
         apiService: ApiService(
           client: MockClient((request) async {
-            return http.Response(jsonEncode({'body': {'status': 'ACTIVE'}}), 200);
+            return http.Response(
+              jsonEncode({
+                'body': {'status': 'ACTIVE'},
+              }),
+              200,
+            );
           }),
         ),
       );
 
       expect(
-        () => source.getTravelFundInviteCode(publicId: 'fund-123', token: 'token'),
+        () => source.getTravelFundInviteCode(
+          publicId: 'fund-123',
+          token: 'token',
+        ),
         throwsA(isA<ServerException>()),
       );
     });
@@ -64,7 +72,9 @@ void main() {
         apiService: ApiService(
           client: MockClient((request) async {
             return http.Response(
-              jsonEncode({'body': {'public_id': 'fund-123'}}),
+              jsonEncode({
+                'body': {'public_id': 'fund-123'},
+              }),
               200,
             );
           }),
@@ -81,6 +91,33 @@ void main() {
       expect(result, 'fund-123');
     });
 
+    test('archives a travel fund with an authenticated PUT request', () async {
+      http.Request? capturedRequest;
+      final source = TravelFundRemoteDataSourceImpl(
+        apiService: ApiService(
+          client: MockClient((request) async {
+            capturedRequest = request;
+            return http.Response(
+              jsonEncode({
+                'body': {'message': 'Archived'},
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+
+      await source.archiveTravelFund(publicId: 'fund-123', token: 'token');
+
+      expect(capturedRequest!.method, 'PUT');
+      expect(
+        capturedRequest!.url.toString(),
+        'http://localhost:8080/api/v1/wanderfund/archive/fund-123',
+      );
+      expect(capturedRequest!.headers['authorization'], 'Bearer token');
+      expect(capturedRequest!.body, '{}');
+    });
+
     test('returns an empty list when the response body is null', () async {
       final source = TravelFundRemoteDataSourceImpl(
         apiService: ApiService(
@@ -90,7 +127,10 @@ void main() {
         ),
       );
 
-      final result = await source.getTravelFunds(userId: 'user-1', token: 'token');
+      final result = await source.getTravelFunds(
+        userId: 'user-1',
+        token: 'token',
+      );
 
       expect(result, isEmpty);
     });
@@ -114,7 +154,12 @@ void main() {
       final source = TravelFundRemoteDataSourceImpl(
         apiService: ApiService(
           client: MockClient((request) async {
-            return http.Response(jsonEncode({'body': {'not': 'a list'}}), 200);
+            return http.Response(
+              jsonEncode({
+                'body': {'not': 'a list'},
+              }),
+              200,
+            );
           }),
         ),
       );

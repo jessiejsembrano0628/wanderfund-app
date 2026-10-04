@@ -36,7 +36,7 @@ void main() {
       expect(capturedRequest!.method, 'GET');
       expect(
         capturedRequest!.url.toString(),
-        'https://wanderfund-backend.onrender.com/api/v1/user',
+        'http://localhost:8080/api/v1/user',
       );
       expect(capturedRequest!.headers['authorization'], 'Bearer saved-token');
       expect(user.id, 'user-123');

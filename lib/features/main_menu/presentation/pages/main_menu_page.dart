@@ -92,6 +92,48 @@ class _MainMenuPageState extends State<MainMenuPage> {
     }
   }
 
+  bool _canArchive(TravelFund fund) =>
+      fund.status.trim().toUpperCase() == 'ACTIVE' &&
+      fund.role.trim().toLowerCase() == 'main';
+
+  Future<void> _archiveFund(TravelFund fund) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Archive travel fund?'),
+        content: Text(
+          '"${fund.travelFundName}" will move to inactive travel funds.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Archive'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final provider = context.read<TravelFundProvider>();
+    final archived = await provider.archiveTravelFund(publicId: fund.publicId);
+    if (!mounted) return;
+    if (archived) await _refreshFunds();
+    if (!mounted) return;
+
+    final message = archived
+        ? provider.actionMessage
+        : provider.actionErrorMessage;
+    if (message != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   Future<void> _showJoinDialog() async {
     final provider = context.read<TravelFundProvider>();
     final responseMessage = await showDialog<String>(
@@ -202,6 +244,17 @@ class _MainMenuPageState extends State<MainMenuPage> {
                   );
                 }
 
+                final inactiveFunds = provider.funds
+                    .where(
+                      (fund) => fund.status.trim().toUpperCase() == 'INACTIVE',
+                    )
+                    .toList();
+                final visibleFunds = provider.funds
+                    .where(
+                      (fund) => fund.status.trim().toUpperCase() != 'INACTIVE',
+                    )
+                    .toList();
+
                 return ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
@@ -239,14 +292,39 @@ class _MainMenuPageState extends State<MainMenuPage> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    ...provider.funds.map(
+                    ...visibleFunds.map(
                       (fund) => _TravelFundCard(
                         fund: fund,
                         onTap: () => Navigator.of(
                           context,
                         ).pushNamed('/ledger', arguments: fund.publicId),
+                        onArchive: _canArchive(fund)
+                            ? () => _archiveFund(fund)
+                            : null,
                       ),
                     ),
+                    if (inactiveFunds.isNotEmpty)
+                      ExpansionTile(
+                        key: const PageStorageKey<String>(
+                          'inactive-travel-funds',
+                        ),
+                        title: Text(
+                          'Inactive travel funds (${inactiveFunds.length})',
+                        ),
+                        initiallyExpanded: false,
+                        tilePadding: EdgeInsets.zero,
+                        children: inactiveFunds
+                            .map(
+                              (fund) => _TravelFundCard(
+                                fund: fund,
+                                onTap: () => Navigator.of(context).pushNamed(
+                                  '/ledger',
+                                  arguments: fund.publicId,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
                   ],
                 );
               },
@@ -327,8 +405,13 @@ class _JoinTravelFundDialogState extends State<_JoinTravelFundDialog> {
 class _TravelFundCard extends StatelessWidget {
   final TravelFund fund;
   final VoidCallback onTap;
+  final VoidCallback? onArchive;
 
-  const _TravelFundCard({required this.fund, required this.onTap});
+  const _TravelFundCard({
+    required this.fund,
+    required this.onTap,
+    this.onArchive,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -393,6 +476,12 @@ class _TravelFundCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onArchive != null)
+                IconButton(
+                  onPressed: onArchive,
+                  tooltip: 'Archive travel fund',
+                  icon: const Icon(Icons.archive_outlined),
+                ),
               const Icon(Icons.arrow_forward_ios, size: 18),
             ],
           ),

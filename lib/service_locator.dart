@@ -92,6 +92,9 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<JoinTravelFundUsecase>(
     JoinTravelFundUsecase(repository: getIt<TravelFundRepository>()),
   );
+  getIt.registerSingleton<ArchiveTravelFundUsecase>(
+    ArchiveTravelFundUsecase(repository: getIt<TravelFundRepository>()),
+  );
   getIt.registerSingleton<GetLedgerUsecase>(
     GetLedgerUsecase(repository: getIt<LedgerRepository>()),
   );
@@ -130,6 +133,7 @@ Future<void> setupServiceLocator() async {
           getIt<GetTravelFundInviteCodeUsecase>(),
       createTravelFundUsecase: getIt<CreateTravelFundUsecase>(),
       joinTravelFundUsecase: getIt<JoinTravelFundUsecase>(),
+      archiveTravelFundUsecase: getIt<ArchiveTravelFundUsecase>(),
     ),
   );
   getIt.registerSingleton<LedgerProvider>(

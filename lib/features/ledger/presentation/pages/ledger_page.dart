@@ -143,10 +143,16 @@ class _LedgerPageState extends State<LedgerPage> {
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _openCreateTransactionPage() async {
+  Future<void> _openCreateTransactionPage({
+    required bool canCreateTransactions,
+  }) async {
+    if (!canCreateTransactions) return;
     final message = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
-        builder: (_) => CreateTransactionPage(publicId: widget.publicId),
+        builder: (_) => CreateTransactionPage(
+          publicId: widget.publicId,
+          canCreateTransactions: canCreateTransactions,
+        ),
       ),
     );
     if (!mounted || message == null) return;
@@ -170,10 +176,16 @@ class _LedgerPageState extends State<LedgerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canManageRequests = context.watch<TravelFundProvider>().funds.any(
+    final travelFunds = context.watch<TravelFundProvider>().funds;
+    final canManageRequests = travelFunds.any(
       (fund) =>
           fund.publicId == widget.publicId &&
           fund.role.trim().toLowerCase() == 'main',
+    );
+    final canCreateTransactions = travelFunds.any(
+      (fund) =>
+          fund.publicId == widget.publicId &&
+          fund.status.trim().toUpperCase() == 'ACTIVE',
     );
 
     return Scaffold(
@@ -181,9 +193,15 @@ class _LedgerPageState extends State<LedgerPage> {
         title: const Text('Travel Fund Ledger'),
         actions: [
           IconButton(
-            onPressed: _openCreateTransactionPage,
+            onPressed: canCreateTransactions
+                ? () => _openCreateTransactionPage(
+                    canCreateTransactions: canCreateTransactions,
+                  )
+                : null,
             icon: const Icon(Icons.add_card_outlined),
-            tooltip: 'Create transaction',
+            tooltip: canCreateTransactions
+                ? 'Create transaction'
+                : 'Transactions are disabled for inactive funds',
           ),
           IconButton(
             onPressed: () => _openTransactionApprovalPage(
@@ -277,8 +295,13 @@ class _LedgerPageState extends State<LedgerPage> {
 
 class CreateTransactionPage extends StatefulWidget {
   final String publicId;
+  final bool canCreateTransactions;
 
-  const CreateTransactionPage({super.key, required this.publicId});
+  const CreateTransactionPage({
+    super.key,
+    required this.publicId,
+    this.canCreateTransactions = false,
+  });
 
   @override
   State<CreateTransactionPage> createState() => _CreateTransactionPageState();
@@ -303,6 +326,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
   }
 
   Future<void> _submit() async {
+    if (!widget.canCreateTransactions || _submitting) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     final message = await context.read<LedgerProvider>().createTransaction(
@@ -334,6 +358,13 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              if (!widget.canCreateTransactions) ...[
+                Text(
+                  'Transactions are disabled for inactive funds.',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                const SizedBox(height: 16),
+              ],
               DropdownButtonFormField<String>(
                 initialValue: _action,
                 decoration: const InputDecoration(
@@ -347,7 +378,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
                     child: Text('Reimbursement request'),
                   ),
                 ],
-                onChanged: _submitting
+                onChanged: _submitting || !widget.canCreateTransactions
                     ? null
                     : (value) {
                         if (value != null) setState(() => _action = value);
@@ -356,6 +387,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _amountController,
+                enabled: widget.canCreateTransactions && !_submitting,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
@@ -373,6 +405,7 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _currencyController,
+                enabled: widget.canCreateTransactions && !_submitting,
                 textCapitalization: TextCapitalization.characters,
                 decoration: const InputDecoration(labelText: 'Currency'),
                 validator: (value) => value == null || value.trim().isEmpty
@@ -382,17 +415,21 @@ class _CreateTransactionPageState extends State<CreateTransactionPage> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
+                enabled: widget.canCreateTransactions && !_submitting,
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: 'Description'),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _referenceController,
+                enabled: widget.canCreateTransactions && !_submitting,
                 decoration: const InputDecoration(labelText: 'Reference ID'),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
-                onPressed: _submitting ? null : _submit,
+                onPressed: _submitting || !widget.canCreateTransactions
+                    ? null
+                    : _submit,
                 icon: _submitting
                     ? const SizedBox.square(
                         dimension: 18,

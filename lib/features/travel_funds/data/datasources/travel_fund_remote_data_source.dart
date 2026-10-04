@@ -13,6 +13,7 @@ abstract class TravelFundRemoteDataSource {
     required String token,
   });
   Future<String> joinTravelFund({required String inviteCode, required String token});
+  Future<void> archiveTravelFund({required String publicId, required String token});
 }
 
 class TravelFundRemoteDataSourceImpl implements TravelFundRemoteDataSource {
@@ -113,5 +114,17 @@ class TravelFundRemoteDataSourceImpl implements TravelFundRemoteDataSource {
       throw ServerException(message: 'Invalid join travel fund response');
     }
     return body['message']?.toString() ?? 'Join request submitted.';
+  }
+
+  @override
+  Future<void> archiveTravelFund({
+    required String publicId,
+    required String token,
+  }) async {
+    await apiService.put(
+      endpoint: AppConstants.archiveTravelFundEndpoint(publicId),
+      token: token,
+      body: const <String, dynamic>{},
+    );
   }
 }

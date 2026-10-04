@@ -1,7 +1,7 @@
 class AppConstants {
   // API Configuration
-  static const String baseUrl = 'https://wanderfund-backend.onrender.com/api';
-  static const String travelFundCommandBaseUrl = 'https://wanderfund-backend.onrender.com/api';
+  static const String baseUrl = 'http://localhost:8080/api';
+  static const String travelFundCommandBaseUrl = 'http://localhost:8080/api';
   static const String apiVersion = 'v1';
   static const int connectionTimeout = 30000; // milliseconds
   static const int receiveTimeout = 30000; // milliseconds
@@ -40,6 +40,8 @@ class AppConstants {
       '$travelFundCommandBaseUrl/$apiVersion/wanderfund/create-travel-fund';
   static String joinTravelFundEndpoint(String inviteCode) =>
       '$travelFundCommandBaseUrl/$apiVersion/wanderfund/join-travel-fund/$inviteCode';
+  static String archiveTravelFundEndpoint(String publicId) =>
+      '$travelFundCommandBaseUrl/$apiVersion/wanderfund/archive/$publicId';
 
   // Error Messages
   static const String networkError =

@@ -86,6 +86,29 @@ class TravelFundRepositoryImpl implements TravelFundRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, void>> archiveTravelFund({
+    required String publicId,
+  }) async {
+    try {
+      final token = _tokenOrFailure();
+      if (token is Failure) return Left(token);
+      await remoteDataSource.archiveTravelFund(
+        publicId: publicId,
+        token: token as String,
+      );
+      return const Right(null);
+    } on AuthenticationException catch (e) {
+      return Left(AuthenticationFailure(message: e.message));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
+
   dynamic _tokenOrFailure() {
     final token = tokenStorage.getToken();
     return token == null || token.isEmpty
