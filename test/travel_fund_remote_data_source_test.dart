@@ -176,6 +176,42 @@ void main() {
       expect(funds.single.travelDate, DateTime(2027, 3, 10));
     });
 
+    test('parses Go-style CreatedAt and ignores zero TravelDate sentinel', () async {
+      final source = TravelFundRemoteDataSourceImpl(
+        apiService: ApiService(
+          client: MockClient((request) async {
+            return http.Response(
+              jsonEncode({
+                'body': [
+                  {
+                    'Role': 'MAIN',
+                    'PublicID': 'd1ea02f2-bbc6-11f1-9c3c-1e58188cddc4',
+                    'TravelFundName': 'Boracay Trip 2027',
+                    'Description': 'Boracay Trip 2027',
+                    'CreatedAt': '2026-10-12 22:08:13.86144 +0800 +08',
+                    'TravelDate': '0001-01-01 00:00:00 +0000 UTC',
+                    'Status': 'ACTIVE',
+                  },
+                ],
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+
+      final funds = await source.getTravelFunds(
+        userId: 'user-1',
+        token: 'token',
+      );
+
+      expect(funds.single.createdAt, isNotNull);
+      expect(funds.single.createdAt!.year, 2026);
+      expect(funds.single.createdAt!.month, 10);
+      expect(funds.single.createdAt!.day, 12);
+      expect(funds.single.travelDate, isNull);
+    });
+
     test('throws when the response is not a map', () async {
       final source = TravelFundRemoteDataSourceImpl(
         apiService: ApiService(
