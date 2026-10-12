@@ -111,6 +111,14 @@ void main() {
           status: '',
           description: 'Another fund description',
         ),
+        TravelFund(
+          role: 'member',
+          publicId: 'no-description-fund',
+          travelFundName: 'No Description Fund',
+          status: 'ACTIVE',
+          createdAt: DateTime(2026, 10, 2),
+          travelDate: DateTime(2027, 4, 12),
+        ),
       ],
     );
     final travelFundProvider = TravelFundProvider(
@@ -152,22 +160,49 @@ void main() {
     expect(find.text('Active Fund'), findsOneWidget);
     expect(find.text('Unknown Status Fund'), findsOneWidget);
     expect(find.text('Inactive Fund'), findsNothing);
-    expect(find.textContaining('Created '), findsOneWidget);
-    expect(find.textContaining('Travel date '), findsOneWidget);
+    expect(find.textContaining('Created '), findsNothing);
+    expect(find.textContaining('Travel date '), findsNothing);
     expect(find.text('Shared trip expenses'), findsNothing);
     expect(find.text('Another fund description'), findsNothing);
+    expect(find.text('Show description'), findsNWidgets(3));
 
     await tester.tap(find.text('Show description').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Shared trip expenses'), findsOneWidget);
+    expect(find.textContaining('Created '), findsOneWidget);
+    expect(find.textContaining('Travel date '), findsOneWidget);
     expect(find.text('Another fund description'), findsNothing);
-    expect(find.text('Show description'), findsOneWidget);
+    expect(find.text('Hide description'), findsOneWidget);
 
     await tester.tap(find.text('Hide description'));
     await tester.pumpAndSettle();
 
     expect(find.text('Shared trip expenses'), findsNothing);
+    expect(find.textContaining('Created '), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text('No Description Fund'),
+      150,
+      scrollable: find.byType(Scrollable).first,
+    );
+    final noDescriptionCard = find.ancestor(
+      of: find.text('No Description Fund'),
+      matching: find.byType(Card),
+    );
+    final noDescriptionToggle = find.descendant(
+      of: noDescriptionCard,
+      matching: find.text('Show description'),
+    );
+    await tester.ensureVisible(noDescriptionToggle);
+    await tester.pumpAndSettle();
+    await tester.tap(noDescriptionToggle);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Created '), findsOneWidget);
+    expect(find.textContaining('Travel date '), findsOneWidget);
+    await tester.tap(find.text('Hide description').last);
+    await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
       find.text('Inactive travel funds (1)'),
@@ -181,6 +216,7 @@ void main() {
     expect(find.text('Inactive Fund'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Active Fund'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Active Fund'));
     await tester.pumpAndSettle();
 

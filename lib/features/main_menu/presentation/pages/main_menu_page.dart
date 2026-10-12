@@ -467,36 +467,6 @@ class _TravelFundCardState extends State<_TravelFundCard> {
                                 'Role: ${fund.role.isEmpty ? 'Member' : fund.role}',
                                 style: theme.textTheme.bodyMedium,
                               ),
-                              if (fund.createdAt != null ||
-                                  fund.travelDate != null) ...[
-                                const SizedBox(height: 6),
-                                Wrap(
-                                  spacing: 12,
-                                  runSpacing: 4,
-                                  children: [
-                                    if (fund.createdAt != null)
-                                      Text(
-                                        'Created ${localizations.formatMediumDate(fund.createdAt!)}',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                    if (fund.travelDate != null)
-                                      Text(
-                                        'Travel date ${localizations.formatMediumDate(fund.travelDate!)}',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme
-                                                  .colorScheme
-                                                  .onSurfaceVariant,
-                                            ),
-                                      ),
-                                  ],
-                                ),
-                              ],
                               const SizedBox(height: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -541,47 +511,92 @@ class _TravelFundCardState extends State<_TravelFundCard> {
                 ),
             ],
           ),
-          if (description.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Column(
-                children: [
-                  const Divider(height: 1),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: () => setState(
-                        () => _isDescriptionExpanded =
-                            !_isDescriptionExpanded,
-                      ),
-                      icon: Icon(
-                        _isDescriptionExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
-                      ),
-                      label: Text(
-                        _isDescriptionExpanded
-                            ? 'Hide description'
-                            : 'Show description',
-                      ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Column(
+              children: [
+                const Divider(height: 1),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => setState(
+                      () => _isDescriptionExpanded =
+                          !_isDescriptionExpanded,
+                    ),
+                    icon: Icon(
+                      _isDescriptionExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                    ),
+                    label: Text(
+                      _isDescriptionExpanded
+                          ? 'Hide description'
+                          : 'Show description',
                     ),
                   ),
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeInOut,
-                    child: _isDescriptionExpanded
-                        ? Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: Text(description),
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeInOut,
+                  child: _isDescriptionExpanded
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (description.isNotEmpty)
+                                  Text(description),
+                                if (fund.createdAt != null ||
+                                    fund.travelDate != null) ...[
+                                  if (description.isNotEmpty)
+                                    const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (fund.createdAt != null)
+                                        Text(
+                                          'Created ${localizations.formatMediumDate(fund.createdAt!)}',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      if (fund.travelDate != null)
+                                        Text(
+                                          'Travel date ${localizations.formatMediumDate(fund.travelDate!)}',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                                if (description.isEmpty &&
+                                    fund.createdAt == null &&
+                                    fund.travelDate == null)
+                                  Text(
+                                    'No additional details available.',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
                             ),
-                          )
-                        : const SizedBox(width: double.infinity),
-                  ),
-                ],
-              ),
+                          ),
+                        )
+                      : const SizedBox(width: double.infinity),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
