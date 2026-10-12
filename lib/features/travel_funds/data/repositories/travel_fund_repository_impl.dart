@@ -57,6 +57,7 @@ class TravelFundRepositoryImpl implements TravelFundRepository {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   }) async {
     try {
       final token = _tokenOrFailure();
@@ -65,6 +66,7 @@ class TravelFundRepositoryImpl implements TravelFundRepository {
         name: name,
         description: description,
         baseCurrency: baseCurrency,
+        travelDate: travelDate,
         token: token as String,
       ));
     } catch (e) {

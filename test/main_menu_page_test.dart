@@ -75,7 +75,7 @@ void main() {
     },
   );
 
-  testWidgets('inactive funds are hidden until their section is expanded', (
+  testWidgets('fund cards show dates and toggle their descriptions', (
     tester,
   ) async {
     final authRepository = _FakeAuthRepository();
@@ -88,12 +88,15 @@ void main() {
     await authProvider.initialize();
 
     final travelFundRepository = _FakeTravelFundRepository(
-      funds: const [
+      funds: [
         TravelFund(
           role: 'main',
           publicId: 'active-fund',
           travelFundName: 'Active Fund',
           status: 'ACTIVE',
+          description: 'Shared trip expenses',
+          createdAt: DateTime(2026, 10, 1),
+          travelDate: DateTime(2027, 3, 10),
         ),
         TravelFund(
           role: 'main',
@@ -106,6 +109,7 @@ void main() {
           publicId: 'unknown-fund',
           travelFundName: 'Unknown Status Fund',
           status: '',
+          description: 'Another fund description',
         ),
       ],
     );
@@ -135,7 +139,12 @@ void main() {
           ChangeNotifierProvider.value(value: authProvider),
           ChangeNotifierProvider.value(value: travelFundProvider),
         ],
-        child: const MaterialApp(home: MainMenuPage()),
+        child: MaterialApp(
+          routes: {
+            '/ledger': (_) => const Scaffold(body: Text('Ledger opened')),
+          },
+          home: const MainMenuPage(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -143,12 +152,39 @@ void main() {
     expect(find.text('Active Fund'), findsOneWidget);
     expect(find.text('Unknown Status Fund'), findsOneWidget);
     expect(find.text('Inactive Fund'), findsNothing);
-    expect(find.text('Inactive travel funds (1)'), findsOneWidget);
+    expect(find.textContaining('Created '), findsOneWidget);
+    expect(find.textContaining('Travel date '), findsOneWidget);
+    expect(find.text('Shared trip expenses'), findsNothing);
+    expect(find.text('Another fund description'), findsNothing);
 
+    await tester.tap(find.text('Show description').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shared trip expenses'), findsOneWidget);
+    expect(find.text('Another fund description'), findsNothing);
+    expect(find.text('Show description'), findsOneWidget);
+
+    await tester.tap(find.text('Hide description'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shared trip expenses'), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text('Inactive travel funds (1)'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Inactive travel funds (1)'), findsOneWidget);
     await tester.tap(find.text('Inactive travel funds (1)'));
     await tester.pumpAndSettle();
 
     expect(find.text('Inactive Fund'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Active Fund'));
+    await tester.tap(find.text('Active Fund'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ledger opened'), findsOneWidget);
   });
 
   testWidgets('main users can archive an active fund after confirmation', (
@@ -280,6 +316,7 @@ class _FakeTravelFundRepository implements TravelFundRepository {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   }) async => throw UnimplementedError();
 
   @override

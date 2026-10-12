@@ -373,6 +373,7 @@ class _FakeLedgerRepository implements LedgerRepository, TravelFundRepository {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   }) async => throw UnimplementedError();
 
   @override

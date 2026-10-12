@@ -402,7 +402,7 @@ class _JoinTravelFundDialogState extends State<_JoinTravelFundDialog> {
   }
 }
 
-class _TravelFundCard extends StatelessWidget {
+class _TravelFundCard extends StatefulWidget {
   final TravelFund fund;
   final VoidCallback onTap;
   final VoidCallback? onArchive;
@@ -414,80 +414,175 @@ class _TravelFundCard extends StatelessWidget {
   });
 
   @override
+  State<_TravelFundCard> createState() => _TravelFundCardState();
+}
+
+class _TravelFundCardState extends State<_TravelFundCard> {
+  bool _isDescriptionExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final fund = widget.fund;
     final isActive = fund.status.toUpperCase() == 'ACTIVE';
+    final localizations = MaterialLocalizations.of(context);
+    final description = fund.description.trim();
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
+      child: Column(
+        children: [
+          Row(
             children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: theme.colorScheme.primaryContainer,
-                child: Icon(
-                  Icons.account_balance_wallet_outlined,
-                  color: theme.colorScheme.onPrimaryContainer,
-                ),
-              ),
-              const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fund.travelFundName.isEmpty
-                          ? "Travel Fund"
-                          : fund.travelFundName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Role: ${fund.role.isEmpty ? 'Member' : fund.role}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: (isActive
-                          ? theme.colorScheme.primary
-                          : Colors.orange)
-                            .withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        fund.status.isEmpty ? 'UNKNOWN' : fund.status,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                            color: isActive
-                              ? theme.colorScheme.primary
-                              : Colors.orange.shade800,
-                          fontWeight: FontWeight.bold,
+                child: InkWell(
+                  onTap: widget.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Icon(
+                            Icons.account_balance_wallet_outlined,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                fund.travelFundName.isEmpty
+                                    ? 'Travel Fund'
+                                    : fund.travelFundName,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Role: ${fund.role.isEmpty ? 'Member' : fund.role}',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              if (fund.createdAt != null ||
+                                  fund.travelDate != null) ...[
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 12,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (fund.createdAt != null)
+                                      Text(
+                                        'Created ${localizations.formatMediumDate(fund.createdAt!)}',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    if (fund.travelDate != null)
+                                      Text(
+                                        'Travel date ${localizations.formatMediumDate(fund.travelDate!)}',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      (isActive
+                                              ? theme.colorScheme.primary
+                                              : Colors.orange)
+                                          .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  fund.status.isEmpty
+                                      ? 'UNKNOWN'
+                                      : fund.status,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: isActive
+                                        ? theme.colorScheme.primary
+                                        : Colors.orange.shade800,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.arrow_forward_ios, size: 18),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-              if (onArchive != null)
+              if (widget.onArchive != null)
                 IconButton(
-                  onPressed: onArchive,
+                  onPressed: widget.onArchive,
                   tooltip: 'Archive travel fund',
                   icon: const Icon(Icons.archive_outlined),
                 ),
-              const Icon(Icons.arrow_forward_ios, size: 18),
             ],
           ),
-        ),
+          if (description.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Column(
+                children: [
+                  const Divider(height: 1),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () => setState(
+                        () => _isDescriptionExpanded =
+                            !_isDescriptionExpanded,
+                      ),
+                      icon: Icon(
+                        _isDescriptionExpanded
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                      ),
+                      label: Text(
+                        _isDescriptionExpanded
+                            ? 'Hide description'
+                            : 'Show description',
+                      ),
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeInOut,
+                    child: _isDescriptionExpanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: Text(description),
+                            ),
+                          )
+                        : const SizedBox(width: double.infinity),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

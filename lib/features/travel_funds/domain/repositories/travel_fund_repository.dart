@@ -11,6 +11,7 @@ abstract class TravelFundRepository {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   });
   Future<Either<Failure, String>> joinTravelFund({required String inviteCode});
   Future<Either<Failure, void>> archiveTravelFund({required String publicId});

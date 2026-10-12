@@ -10,6 +10,7 @@ abstract class TravelFundRemoteDataSource {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
     required String token,
   });
   Future<String> joinTravelFund({required String inviteCode, required String token});
@@ -78,6 +79,7 @@ class TravelFundRemoteDataSourceImpl implements TravelFundRemoteDataSource {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
     required String token,
   }) async {
     final response = await apiService.post(
@@ -87,6 +89,9 @@ class TravelFundRemoteDataSourceImpl implements TravelFundRemoteDataSource {
         'name': name,
         'description': description,
         'base_currency': baseCurrency,
+        'travel_date': '${travelDate.year.toString().padLeft(4, '0')}-'
+            '${travelDate.month.toString().padLeft(2, '0')}-'
+            '${travelDate.day.toString().padLeft(2, '0')}',
       },
     );
     final body = response is Map<String, dynamic> ? response['body'] : null;

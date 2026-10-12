@@ -55,12 +55,14 @@ class TravelFundProvider extends ChangeNotifier {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   }) async {
     _startAction();
     final result = await createTravelFundUsecase(
       name: name,
       description: description,
       baseCurrency: baseCurrency,
+      travelDate: travelDate,
     );
     final inviteCode = result.fold(
       (failure) {

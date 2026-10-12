@@ -14,13 +14,33 @@ class _CreateTravelFundPageState extends State<CreateTravelFundPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _travelDateController = TextEditingController();
   String _currency = 'PHP';
+  DateTime? _travelDate;
 
   @override
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _travelDateController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectTravelDate() async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _travelDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (selectedDate == null || !mounted) return;
+    setState(() {
+      _travelDate = selectedDate;
+      _travelDateController.text =
+          '${selectedDate.year.toString().padLeft(4, '0')}-'
+          '${selectedDate.month.toString().padLeft(2, '0')}-'
+          '${selectedDate.day.toString().padLeft(2, '0')}';
+    });
   }
 
   Future<void> _submit() async {
@@ -30,6 +50,7 @@ class _CreateTravelFundPageState extends State<CreateTravelFundPage> {
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
       baseCurrency: _currency,
+      travelDate: _travelDate!,
     );
     if (!mounted) return;
     if (publicId != null) {
@@ -87,7 +108,7 @@ class _CreateTravelFundPageState extends State<CreateTravelFundPage> {
                   controller: _nameController,
                   decoration: const InputDecoration(
                     labelText: 'Fund name',
-                    hintText: 'Boracay Trip 2027',
+                    hintText: 'Travel Fund Name',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
@@ -119,6 +140,20 @@ class _CreateTravelFundPageState extends State<CreateTravelFundPage> {
                   onChanged: provider.isActionLoading
                       ? null
                       : (value) => setState(() => _currency = value ?? 'PHP'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _travelDateController,
+                  readOnly: true,
+                  onTap: provider.isActionLoading ? null : _selectTravelDate,
+                  decoration: const InputDecoration(
+                    labelText: 'Travel date',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  validator: (_) => _travelDate == null
+                      ? 'Travel date is required'
+                      : null,
                 ),
                 if (provider.actionErrorMessage != null) ...[
                   const SizedBox(height: 16),

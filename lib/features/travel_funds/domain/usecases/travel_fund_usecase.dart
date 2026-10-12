@@ -32,11 +32,13 @@ class CreateTravelFundUsecase {
     required String name,
     required String description,
     required String baseCurrency,
+    required DateTime travelDate,
   }) {
     return repository.createTravelFund(
       name: name,
       description: description,
       baseCurrency: baseCurrency,
+      travelDate: travelDate,
     );
   }
 }

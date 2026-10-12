@@ -68,9 +68,11 @@ void main() {
     });
 
     test('returns the public ID when creating a travel fund', () async {
+      http.Request? capturedRequest;
       final source = TravelFundRemoteDataSourceImpl(
         apiService: ApiService(
           client: MockClient((request) async {
+            capturedRequest = request;
             return http.Response(
               jsonEncode({
                 'body': {'public_id': 'fund-123'},
@@ -85,10 +87,15 @@ void main() {
         name: 'Trip',
         description: 'Shared trip',
         baseCurrency: 'PHP',
+        travelDate: DateTime(2026, 10, 12),
         token: 'token',
       );
 
       expect(result, 'fund-123');
+      expect(
+        (jsonDecode(capturedRequest!.body) as Map<String, dynamic>)['travel_date'],
+        '2026-10-12',
+      );
     });
 
     test('archives a travel fund with an authenticated PUT request', () async {
@@ -133,6 +140,40 @@ void main() {
       );
 
       expect(result, isEmpty);
+    });
+
+    test('parses description and dates from travel fund list items', () async {
+      final source = TravelFundRemoteDataSourceImpl(
+        apiService: ApiService(
+          client: MockClient((request) async {
+            return http.Response(
+              jsonEncode({
+                'body': [
+                  {
+                    'Role': 'main',
+                    'PublicID': 'fund-123',
+                    'TravelFundName': 'Japan Trip',
+                    'Status': 'ACTIVE',
+                    'Description': 'Shared trip expenses',
+                    'CreatedAt': '2026-10-01T12:30:00Z',
+                    'TravelDate': '2027-03-10',
+                  },
+                ],
+              }),
+              200,
+            );
+          }),
+        ),
+      );
+
+      final funds = await source.getTravelFunds(
+        userId: 'user-1',
+        token: 'token',
+      );
+
+      expect(funds.single.description, 'Shared trip expenses');
+      expect(funds.single.createdAt?.toUtc(), DateTime.utc(2026, 10, 1, 12, 30));
+      expect(funds.single.travelDate, DateTime(2027, 3, 10));
     });
 
     test('throws when the response is not a map', () async {
