@@ -30,7 +30,7 @@ class _CreateTravelFundPageState extends State<CreateTravelFundPage> {
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: _travelDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
+      firstDate: DateTime.now(),
       lastDate: DateTime(2100),
     );
     if (selectedDate == null || !mounted) return;
