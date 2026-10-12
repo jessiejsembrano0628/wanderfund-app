@@ -4,6 +4,13 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../travel_funds/data/models/travel_fund_model.dart';
 import '../../../travel_funds/presentation/providers/travel_fund_provider.dart';
 
+String _formatDate(DateTime date) {
+  final year = date.year.toString().padLeft(4, '0');
+  final month = date.month.toString().padLeft(2, '0');
+  final day = date.day.toString().padLeft(2, '0');
+  return '$year-$month-$day';
+}
+
 class MainMenuPage extends StatefulWidget {
   const MainMenuPage({super.key});
 
@@ -425,7 +432,6 @@ class _TravelFundCardState extends State<_TravelFundCard> {
     final theme = Theme.of(context);
     final fund = widget.fund;
     final isActive = fund.status.toUpperCase() == 'ACTIVE';
-    final localizations = MaterialLocalizations.of(context);
     final description = fund.description.trim();
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -558,7 +564,7 @@ class _TravelFundCardState extends State<_TravelFundCard> {
                                     children: [
                                       if (fund.createdAt != null)
                                         Text(
-                                          'Created ${localizations.formatMediumDate(fund.createdAt!)}',
+                                          'Created ${_formatDate(fund.createdAt!)}',
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
                                                 color: theme
@@ -568,7 +574,7 @@ class _TravelFundCardState extends State<_TravelFundCard> {
                                         ),
                                       if (fund.travelDate != null)
                                         Text(
-                                          'Travel date ${localizations.formatMediumDate(fund.travelDate!)}',
+                                          'Travel date ${_formatDate(fund.travelDate!)}',
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
                                                 color: theme

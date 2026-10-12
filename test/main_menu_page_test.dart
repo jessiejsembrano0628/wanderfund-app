@@ -170,8 +170,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Shared trip expenses'), findsOneWidget);
-    expect(find.textContaining('Created '), findsOneWidget);
-    expect(find.textContaining('Travel date '), findsOneWidget);
+    expect(find.text('Created 2026-10-01'), findsOneWidget);
+    expect(find.text('Travel date 2027-03-10'), findsOneWidget);
     expect(find.text('Another fund description'), findsNothing);
     expect(find.text('Hide description'), findsOneWidget);
 
