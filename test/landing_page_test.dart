@@ -53,6 +53,36 @@ void main() {
     expect(find.text('Keep the ledger moving'), findsOneWidget);
   });
 
+  testWidgets('back-to-top button appears after scrolling and returns upward', (
+    tester,
+  ) async {
+    final authProvider = _createAuthProvider();
+    addTearDown(authProvider.dispose);
+    await authProvider.initialize();
+
+    await _pumpLanding(tester, authProvider);
+    expect(find.byTooltip('Back to top'), findsNothing);
+
+    await tester.drag(
+      find.byKey(const Key('landing-scroll-view')),
+      const Offset(0, -900),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Back to top'), findsOneWidget);
+    await tester.tap(find.byTooltip('Back to top'));
+    await tester.pumpAndSettle();
+
+    final scrollable = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byKey(const Key('landing-scroll-view')),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(scrollable.position.pixels, 0);
+    expect(find.byTooltip('Back to top'), findsNothing);
+  });
+
   testWidgets('signed-out footer CTA opens LoginPage', (tester) async {
     final authProvider = _createAuthProvider();
     addTearDown(authProvider.dispose);

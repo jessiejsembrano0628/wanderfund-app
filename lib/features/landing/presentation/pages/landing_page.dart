@@ -19,9 +19,32 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final _scrollController = ScrollController();
   final _aboutKey = GlobalKey();
   final _featuresKey = GlobalKey();
   final _howItWorksKey = GlobalKey();
+  bool _showBackToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  void _handleScroll() {
+    if (!_scrollController.hasClients) return;
+    final shouldShow = _scrollController.offset > 300;
+    if (shouldShow == _showBackToTop) return;
+    setState(() => _showBackToTop = shouldShow);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
+    super.dispose();
+  }
 
   Future<void> _scrollTo(GlobalKey sectionKey) async {
     _scaffoldKey.currentState?.closeEndDrawer();
@@ -91,8 +114,23 @@ class _LandingPageState extends State<LandingPage> {
         ],
       ),
       endDrawer: _buildDrawer(canLaunch),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton(
+              tooltip: 'Back to top',
+              backgroundColor: _brandColor,
+              foregroundColor: Colors.white,
+              onPressed: () => _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOutCubic,
+              ),
+              child: const Icon(Icons.keyboard_arrow_up_rounded),
+            )
+          : null,
       body: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
+          key: const Key('landing-scroll-view'),
+          controller: _scrollController,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -355,7 +393,7 @@ class _LandingPageState extends State<LandingPage> {
     const steps = [
       (
         '01',
-        'Create your trip fund',
+        'Create your Travel fund fund',
         'Set up your trip and choose a base currency for your group.',
       ),
       (
