@@ -393,7 +393,7 @@ class _LandingPageState extends State<LandingPage> {
     const steps = [
       (
         '01',
-        'Create your Travel fund fund',
+        'Create your Travel fund',
         'Set up your trip and choose a base currency for your group.',
       ),
       (
