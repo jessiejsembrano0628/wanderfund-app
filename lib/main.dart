@@ -13,6 +13,7 @@ import 'features/ledger/presentation/providers/ledger_provider.dart';
 import 'features/travel_funds/presentation/providers/travel_fund_provider.dart';
 import 'features/travel_funds/presentation/pages/create_travel_fund_page.dart';
 import 'features/ledger/presentation/pages/ledger_page.dart';
+import 'features/landing/presentation/pages/landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -62,6 +63,9 @@ class _SessionShellState extends State<_SessionShell> {
       timeout: const Duration(minutes: 10),
       onTimeout: _handleIdleTimeout,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<AuthProvider>().initialize();
+    });
   }
 
   @override
@@ -81,7 +85,7 @@ class _SessionShellState extends State<_SessionShell> {
     await context.read<AuthProvider>().logout();
     if (!mounted) return;
     _navigatorKey.currentState?.pushNamedAndRemoveUntil(
-      '/login',
+      '/landing',
       (route) => false,
     );
   }
@@ -105,7 +109,7 @@ class _SessionShellState extends State<_SessionShell> {
         child: MaterialApp(
           title: 'WanderFund',
           theme: AppTheme.light,
-          home: const AuthWrapper(),
+          home: const LandingPage(),
           navigatorKey: _navigatorKey,
           onGenerateRoute: _generateRoute,
         ),
@@ -115,7 +119,9 @@ class _SessionShellState extends State<_SessionShell> {
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
     final isPublicRoute =
-        settings.name == '/login' || settings.name == '/register';
+      settings.name == '/landing' ||
+      settings.name == '/login' ||
+      settings.name == '/register';
     final authProvider = context.read<AuthProvider>();
     if (!isPublicRoute &&
         (!authProvider.isInitialized ||
@@ -142,6 +148,8 @@ class _SessionShellState extends State<_SessionShell> {
 
   Widget _pageForRoute(RouteSettings settings) {
     switch (settings.name) {
+      case '/landing':
+        return const LandingPage();
       case '/login':
         return const LoginPage();
       case '/register':

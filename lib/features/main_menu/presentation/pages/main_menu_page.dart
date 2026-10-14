@@ -65,7 +65,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
   Future<void> _logoutAndRedirect() async {
     await context.read<AuthProvider>().logout();
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil('/landing', (route) => false);
   }
 
   void _redirectToLoginIfNeeded(TravelFundProvider provider) {

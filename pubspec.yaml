@@ -26,3 +26,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/Travel Fund.png
+    - assets/Transactions.png
+    - assets/Join Travel Fund.png

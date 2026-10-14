@@ -1,0 +1,22 @@
+00:00 +0: loading c:/Users/sembr/Desktop/WanderFund/github/wanderfund-app/test/travel_fund_remote_data_source_test.dart
+00:00 +0: TravelFundRemoteDataSourceImpl gets the invite code for a public ID
+00:00 +1: TravelFundRemoteDataSourceImpl throws when the invite response has no code
+00:00 +2: TravelFundRemoteDataSourceImpl returns the public ID when creating a travel fund
+00:00 +3: TravelFundRemoteDataSourceImpl archives a travel fund with an authenticated PUT request
+00:00 +4: TravelFundRemoteDataSourceImpl returns an empty list when the response body is null
+00:00 +5: TravelFundRemoteDataSourceImpl parses description and dates from travel fund list items
+00:00 +6: TravelFundRemoteDataSourceImpl parses Go-style CreatedAt and ignores zero TravelDate sentinel
+00:00 +6 -1: TravelFundRemoteDataSourceImpl parses Go-style CreatedAt and ignores zero TravelDate sentinel [E]
+  Expected: not null
+    Actual: <null>
+  
+  package:matcher                                      expect
+  package:flutter_test/src/widget_tester.dart 473:18   expect
+  test\travel_fund_remote_data_source_test.dart 208:7  main.<fn>.<fn>
+  
+00:00 +6 -1: TravelFundRemoteDataSourceImpl throws when the response is not a map
+00:00 +7 -1: TravelFundRemoteDataSourceImpl throws when the body is not a list
+00:00 +8 -1: Some tests failed.
+
+Failing tests:
+  c:/Users/sembr/Desktop/WanderFund/github/wanderfund-app/test/travel_fund_remote_data_source_test.dart: TravelFundRemoteDataSourceImpl parses Go-style CreatedAt and ignores zero TravelDate sentinel

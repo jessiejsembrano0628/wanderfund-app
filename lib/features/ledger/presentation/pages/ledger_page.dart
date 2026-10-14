@@ -38,7 +38,7 @@ class _LedgerPageState extends State<LedgerPage> {
   Future<void> _logoutAndRedirect() async {
     await context.read<AuthProvider>().logout();
     if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil('/landing', (route) => false);
   }
 
   Future<void> _openMembersDialog() async {
